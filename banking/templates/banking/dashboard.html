@@ -1,0 +1,1043 @@
+{% extends 'banking/base.html' %}
+{% load banking_tags %}
+
+{% block title %}Tableau de Bord - MaBanque{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modal de suspension */
+    .suspension-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .suspension-modal.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        max-width: 500px;
+        width: 100%;
+        padding: 0;
+        box-shadow: var(--shadow-lg);
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+        color: var(--white);
+        padding: 24px;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .modal-header i {
+        font-size: 32px;
+    }
+
+    .modal-header-text h3 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .modal-header-text p {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-message {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+    }
+
+    .fee-box {
+        background: #fff3e0;
+        border-left: 4px solid var(--warning);
+        padding: 16px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px;
+    }
+
+    .fee-box h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--warning);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    .fee-amount {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--warning);
+    }
+
+    .modal-close-btn {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    /* Carte Bancaire Virtuelle - Style minimaliste */
+    .virtual-card {
+        background: linear-gradient(135deg, #e8e5d8 0%, #d8d5c8 100%);
+        border-radius: 16px;
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        aspect-ratio: 1.586 / 1;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-type {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .card-date {
+        font-size: 10px;
+        font-weight: 400;
+        color: #6b7280;
+        letter-spacing: 0.3px;
+    }
+
+    /* Solde principal au centre */
+    .card-balance-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        flex: 1;
+        margin: 12px 0;
+    }
+
+    .card-balance-amount {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        letter-spacing: -0.5px;
+        line-height: 1;
+    }
+
+    /* Numéro de carte en bas */
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-number {
+        font-size: 13px;
+        font-weight: 500;
+        color: #4a5568;
+        letter-spacing: 2px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .network-circles {
+        display: flex;
+        gap: 0;
+    }
+
+    .network-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        opacity: 0.4;
+        background: #9ca3af;
+    }
+
+    .network-circle:last-child {
+        margin-left: -8px;
+    }
+
+    /* Masquer les anciens éléments non utilisés */
+    .card-chip,
+    .card-bottom,
+    .card-holder,
+    .card-expiry,
+    .card-label,
+    .card-value,
+    .card-balance-label,
+    .card-logo,
+    .card-network {
+        display: none;
+    }
+
+    /* Cartes d'Action */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .action-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        text-align: center;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        color: var(--text-dark);
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .action-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+    }
+
+    .action-icon.transfer {
+        background: #e3f2fd;
+        color: var(--info);
+    }
+
+    .action-icon.send {
+        background: #fff8e1;
+        color: var(--warning);
+    }
+
+    .action-icon.more {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .action-icon.manage {
+        background: #e0f2f1;
+        color: #00796b;
+    }
+
+    .action-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    /* Cartes des comptes */
+    .accounts-section {
+        margin-bottom: 20px;
+    }
+
+    .accounts-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .account-display-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 18px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.2s;
+    }
+
+    .account-display-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .account-display-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .account-display-icon.checking {
+        background: #e3f2fd;
+        color: var(--info);
+    }
+
+    .account-display-icon.savings {
+        background: #e8f5e9;
+        color: var(--success);
+    }
+
+    .account-display-info {
+        flex: 1;
+    }
+
+    .account-display-type {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+
+    .account-display-number {
+        font-size: 12px;
+        color: var(--text-gray);
+        font-family: 'Courier New', monospace;
+        margin-bottom: 6px;
+    }
+
+    .account-display-balance {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary-red);
+    }
+
+    /* Carte Récompenses */
+    .rewards-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .rewards-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .rewards-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .rewards-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .rewards-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .rewards-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .rewards-text {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .rewards-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-gray);
+    }
+
+    /* Barre de Recherche */
+    .search-wrapper {
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 12px;
+    }
+
+    .search-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        background: var(--white);
+        transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-red);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: var(--text-gray);
+    }
+
+    .filter-btn {
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        color: var(--text-gray);
+        transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+        background: var(--bg-gray);
+    }
+
+    /* Transactions */
+    .transactions-section {
+        margin-top: 8px;
+    }
+
+    .section-date {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .transaction-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .transaction-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(2px);
+    }
+
+    .transaction-card.rejected {
+        background: #ffebee;
+        border-color: #ef5350;
+    }
+
+    .transaction-card.rejected .transaction-amount {
+        color: #c62828;
+    }
+
+    .transaction-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .transaction-icon.deposit {
+        background: #e8f5e9;
+        color: var(--success);
+    }
+
+    .transaction-icon.payment {
+        background: #fff3e0;
+        color: var(--warning);
+    }
+
+    .transaction-icon.purchase {
+        background: #e3f2fd;
+        color: var(--info);
+    }
+
+    .transaction-icon.transfer {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .transaction-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .transaction-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+    }
+
+    .transaction-subtitle {
+        font-size: 13px;
+        color: var(--text-gray);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .transaction-amount-wrapper {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .transaction-amount {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .transaction-amount.positive {
+        color: var(--success);
+    }
+
+    .transaction-amount.negative {
+        color: var(--text-dark);
+    }
+
+    .transaction-balance {
+        font-size: 12px;
+        color: var(--text-gray);
+    }
+
+    .transaction-arrow {
+        color: var(--text-light);
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    @media (min-width: 768px) {
+        .virtual-card {
+            padding: 22px 26px;
+        }
+
+        .card-type {
+            font-size: 12px;
+        }
+
+        .card-date {
+            font-size: 11px;
+        }
+
+        .card-balance-amount {
+            font-size: 36px;
+        }
+
+        .card-number {
+            font-size: 15px;
+            letter-spacing: 2.5px;
+        }
+
+        .network-circle {
+            width: 28px;
+            height: 28px;
+        }
+
+        .actions-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            padding: 24px 16px;
+        }
+
+        .action-icon {
+            width: 64px;
+            height: 64px;
+            font-size: 30px;
+        }
+
+        .accounts-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .virtual-card {
+            padding: 24px 28px;
+        }
+
+        .card-type {
+            font-size: 13px;
+            letter-spacing: 1.2px;
+        }
+
+        .card-date {
+            font-size: 12px;
+        }
+
+        .card-balance-amount {
+            font-size: 42px;
+            letter-spacing: -0.8px;
+        }
+
+        .card-number {
+            font-size: 16px;
+            letter-spacing: 3px;
+        }
+
+        .network-circle {
+            width: 30px;
+            height: 30px;
+        }
+
+        .actions-grid {
+            grid-template-columns: repeat(4, 1fr);
+            margin-bottom: 32px;
+            gap: 16px;
+        }
+
+        .transactions-section .transactions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .section-date {
+            grid-column: 1 / -1;
+            margin-bottom: 0;
+        }
+
+        .transaction-card {
+            margin-bottom: 0;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .virtual-card {
+            padding: 26px 30px;
+        }
+
+        .card-type {
+            font-size: 13px;
+        }
+
+        .card-date {
+            font-size: 12px;
+        }
+
+        .card-balance-amount {
+            font-size: 44px;
+        }
+
+        .card-number {
+            font-size: 17px;
+        }
+
+        .network-circle {
+            width: 32px;
+            height: 32px;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .transactions-section .transactions-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block header_content %}
+<!-- Carte Bancaire Virtuelle -->
+{% if primary_card %}
+<div class="virtual-card mobile-card">
+    <!-- En-tête avec type de compte et date -->
+    <div class="card-header">
+        <div class="card-type">{{ primary_account.get_account_type_display|upper }}</div>
+        <div class="card-date">{% now "d/m/Y" %}</div>
+    </div>
+    
+    <!-- Solde principal au centre -->
+    <div class="card-balance-main">
+        <div class="card-balance-amount">{{ primary_account.balance|floatformat:2 }} {{ primary_account.currency|currency_symbol }}</div>
+    </div>
+    
+    <!-- Numéro de carte masqué et logo en bas -->
+    <div class="card-footer">
+        <div class="card-number">{{ primary_card.get_masked_number|slice:":19" }}</div>
+        <div class="network-circles">
+            <div class="network-circle"></div>
+            <div class="network-circle"></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Modal de suspension du compte -->
+{% if primary_account and primary_account.status == 'SUSPENDED' %}
+<div class="suspension-modal show" id="suspensionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class='bx bx-error-circle'></i>
+            <div class="modal-header-text">
+                <h3>Compte Suspendu</h3>
+                <p>Votre compte nécessite une action</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <p class="modal-message">
+                Cher(e) client(e),<br><br>
+                Nous avons le regret de vous informer que votre compte est actuellement <strong>suspendu</strong>.
+                <br><br>
+                <strong>Motif de la suspension :</strong><br>
+                {{ primary_account.suspension_reason }}
+                <br><br>
+                {% if primary_account.unblock_fee > 0 %}
+                En accord avec notre politique, vous devez vous rendre en agence pour payer les frais de déblocage afin de retrouver toutes les fonctionnalités de votre compte.
+                {% else %}
+                Veuillez contacter notre service client ou vous rendre en agence pour régulariser votre situation.
+                {% endif %}
+            </p>
+            
+            {% if primary_account.unblock_fee > 0 %}
+            <div class="fee-box">
+                <h4>Frais de déblocage</h4>
+                <div class="fee-amount">{{ primary_account.unblock_fee|floatformat:2 }} €</div>
+            </div>
+            {% endif %}
+            
+            <button class="modal-close-btn" onclick="closeModal()">
+                J'ai compris
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Cartes d'Action -->
+<div class="actions-grid">
+    <a href="{% url 'banking:transfer' %}" class="action-card">
+        <div class="action-icon transfer">
+            <i class='bx bx-transfer-alt'></i>
+        </div>
+        <div class="action-label">Virement</div>
+    </a>
+    <a href="{% url 'banking:internal_transfer' %}" class="action-card">
+        <div class="action-icon send">
+            <i class='bx bx-refresh'></i>
+        </div>
+        <div class="action-label">Entre Comptes</div>
+    </a>
+    <a href="{% url 'banking:rib' %}" class="action-card">
+        <div class="action-icon more">
+            <i class='bx bx-credit-card-front'></i>
+        </div>
+        <div class="action-label">RIB</div>
+    </a>
+    <a href="{% url 'banking:settings' %}" class="action-card">
+        <div class="action-icon manage">
+            <i class='bx bx-cog'></i>
+        </div>
+        <div class="action-label">Paramètres</div>
+    </a>
+</div>
+
+<!-- Mes Comptes (si l'utilisateur a plusieurs comptes) -->
+{% if user.bank_accounts.count > 1 %}
+<div class="accounts-section">
+    <div class="accounts-grid">
+        {% for account in user.bank_accounts.all %}
+        <div class="account-display-card">
+            <div class="account-display-icon {{ account.account_type|lower }}">
+                {% if account.account_type == 'CHECKING' %}
+                <i class='bx bx-wallet'></i>
+                {% else %}
+                <i class='bx bx-money'></i>
+                {% endif %}
+            </div>
+            <div class="account-display-info">
+                <div class="account-display-type">{{ account.get_account_type_display }}</div>
+                <div class="account-display-number">{{ account.get_masked_number }}</div>
+                <div class="account-display-balance">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Historique des transactions -->
+<a href="{% url 'banking:transactions' %}" class="rewards-card" style="text-decoration: none; color: inherit;">
+    <div class="rewards-left">
+        <div class="rewards-icon">
+            <div class="rewards-dots">
+                <span style="background: #E63946;"></span>
+                <span style="background: #F4A261;"></span>
+                <span style="background: #2A9D8F;"></span>
+                <span style="background: #264653;"></span>
+            </div>
+        </div>
+        <div class="rewards-text">Historique des transactions</div>
+    </div>
+    <div class="rewards-right">
+        {{ transactions|length }} transactions
+        <i class='bx bx-chevron-right'></i>
+    </div>
+</a>
+
+<!-- Barre de Recherche -->
+<div class="search-wrapper">
+    <div class="search-box">
+        <div class="search-input-wrapper">
+            <i class='bx bx-search search-icon'></i>
+            <input type="text" class="search-input" placeholder="Rechercher des transactions" id="searchInput">
+        </div>
+        <button class="filter-btn">
+            <i class='bx bx-slider-alt'></i>
+        </button>
+    </div>
+</div>
+
+<!-- Transactions -->
+<div class="transactions-section">
+    <div class="transactions-grid">
+        {% regroup transactions by created_at|date:"l, j M Y" as transaction_list %}
+        {% for transaction_group in transaction_list %}
+        <div class="section-date">{{ transaction_group.grouper|upper }}</div>
+        
+        {% for transaction in transaction_group.list %}
+        <div class="transaction-card {% if transaction.status == 'REJECTED' %}rejected{% endif %}" 
+             data-transaction-id="{{ transaction.id }}" 
+             data-transaction-status="{{ transaction.status }}"
+             data-transaction-url="{% url 'banking:transaction_detail' transaction.id %}"
+             onclick="handleTransactionClick(this, event)">
+            <div class="transaction-icon {{ transaction.transaction_type|lower }}">
+                {% if transaction.transaction_type == 'DEPOSIT' %}
+                <i class='bx bx-down-arrow-circle'></i>
+                {% elif transaction.transaction_type == 'PAYMENT' %}
+                <i class='bx bx-receipt'></i>
+                {% elif transaction.transaction_type == 'PURCHASE' or transaction.transaction_type == 'ONLINE_PURCHASE' %}
+                <i class='bx bx-shopping-bag'></i>
+                {% elif transaction.transaction_type == 'TRANSFER' %}
+                <i class='bx bx-transfer-alt'></i>
+                {% else %}
+                <i class='bx bx-wallet'></i>
+                {% endif %}
+            </div>
+            <div class="transaction-info">
+                <div class="transaction-title">{{ transaction.get_transaction_type_display }}</div>
+                <div class="transaction-subtitle">{{ transaction.description }}</div>
+            </div>
+            <div class="transaction-amount-wrapper">
+                <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">
+                    {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}
+                </div>
+                <div class="transaction-balance">{{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
+            </div>
+            <i class='bx bx-chevron-right transaction-arrow'></i>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fermer le modal de suspension
+    function closeModal() {
+        document.getElementById('suspensionModal').classList.remove('show');
+    }
+    
+    // Triple clic caché sur les transactions
+    let clickCounts = {};
+    let clickTimers = {};
+    
+    window.handleTransactionClick = function(card, event) {
+        const transactionId = card.getAttribute('data-transaction-id');
+        const transactionStatus = card.getAttribute('data-transaction-status');
+        const cardUrl = card.getAttribute('data-transaction-url');
+        
+        // Pour les transactions en attente, gérer le triple clic
+        if (transactionStatus === 'PENDING') {
+            if (!clickCounts[transactionId]) {
+                clickCounts[transactionId] = 0;
+            }
+            
+            clickCounts[transactionId]++;
+            console.log(`✓ Clic ${clickCounts[transactionId]} détecté sur transaction ${transactionId}`);
+            
+            // Si 3 clics détectés
+            if (clickCounts[transactionId] >= 3) {
+                clearTimeout(clickTimers[transactionId]);
+                clickCounts[transactionId] = 0;
+                console.log('🎉 Triple clic détecté! Affichage du modal...');
+                showValidationModal(transactionId);
+                return;
+            }
+            
+            // Réinitialiser après 2 secondes
+            clearTimeout(clickTimers[transactionId]);
+            clickTimers[transactionId] = setTimeout(() => {
+                console.log(`⏱️ Timeout - ${clickCounts[transactionId]} clic(s) seulement. Redirection...`);
+                if (clickCounts[transactionId] > 0 && clickCounts[transactionId] < 3) {
+                    window.location.href = cardUrl;
+                }
+                clickCounts[transactionId] = 0;
+            }, 2000);
+        } else {
+            // Pour les autres transactions, redirection directe
+            window.location.href = cardUrl;
+        }
+    };
+    
+    function showValidationModal(transactionId) {
+        const modal = `
+            <div id="validationModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div style="background: white; border-radius: 16px; max-width: 400px; width: 100%; padding: 0; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                    <div style="background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%); color: white; padding: 24px; border-radius: 16px 16px 0 0;">
+                        <h3 style="margin: 0; font-size: 20px; font-weight: 700;">Valider la Transaction</h3>
+                        <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Que souhaitez-vous faire ?</p>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="font-size: 14px; color: #666; margin-bottom: 24px;">Cette transaction est en attente de validation.</p>
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="confirmTransaction(${transactionId})" style="flex: 1; background: #2e7d32; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">
+                                ✓ Confirmer
+                            </button>
+                            <button onclick="rejectTransaction(${transactionId})" style="flex: 1; background: #d32f2f; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">
+                                ✗ Rejeter
+                            </button>
+                        </div>
+                        <button onclick="closeValidationModal()" style="width: 100%; background: #f5f5f5; color: #666; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px;">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modal);
+    }
+    
+    function closeValidationModal() {
+        const modal = document.getElementById('validationModal');
+        if (modal) modal.remove();
+    }
+    
+    function confirmTransaction(transactionId) {
+        closeValidationModal();
+        showLoader('Confirmation de la transaction...');
+        window.location.href = '/transactions/' + transactionId + '/confirm/';
+    }
+    
+    function rejectTransaction(transactionId) {
+        closeValidationModal();
+        showLoader('Redirection vers la page de rejet...');
+        window.location.href = '/transactions/' + transactionId + '/reject/';
+    }
+    
+    // Recherche de transactions
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const transactions = document.querySelectorAll('.transaction-card');
+        
+        transactions.forEach(transaction => {
+            const title = transaction.querySelector('.transaction-title').textContent.toLowerCase();
+            const subtitle = transaction.querySelector('.transaction-subtitle').textContent.toLowerCase();
+            
+            if (title.includes(searchTerm) || subtitle.includes(searchTerm)) {
+                transaction.style.display = 'flex';
+            } else {
+                transaction.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

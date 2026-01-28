@@ -1,0 +1,199 @@
+{% extends 'banking/base.html' %}
+{% load banking_tags %}
+
+{% block title %}Rejeter la Transaction - {{ bank_name }}{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:dashboard' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-gray);
+        margin-bottom: 20px;
+    }
+
+    .warning-box {
+        background: #fff3e0;
+        border-left: 4px solid #f57c00;
+        padding: 20px;
+        border-radius: var(--radius-md);
+        margin-bottom: 24px;
+    }
+
+    .warning-box h3 {
+        color: #f57c00;
+        font-size: 16px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .warning-box p {
+        color: var(--text-gray);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .transaction-summary {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--bg-gray);
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
+    }
+
+    .summary-label {
+        font-size: 14px;
+        color: var(--text-gray);
+    }
+
+    .summary-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .rejection-form {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 15px;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #d32f2f;
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: #d32f2f;
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .submit-btn:hover {
+        background: #b71c1c;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 28px;
+        }
+
+        .rejection-form {
+            padding: 28px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Rejeter la Transaction</h1>
+    <p class="page-subtitle">Annuler et rembourser cette transaction</p>
+</div>
+
+<div class="warning-box">
+    <h3>
+        <i class='bx bx-error-circle'></i>
+        Attention
+    </h3>
+    <p>
+        Le rejet de cette transaction entraînera un remboursement automatique du montant sur votre compte.
+        Des frais de rejet peuvent être appliqués selon votre contrat bancaire.
+    </p>
+</div>
+
+<div class="transaction-summary">
+    <div class="summary-row">
+        <span class="summary-label">Montant</span>
+        <span class="summary-value">{{ transaction.amount }} {{ transaction.account.currency|currency_symbol }}</span>
+    </div>
+    <div class="summary-row">
+        <span class="summary-label">Description</span>
+        <span class="summary-value">{{ transaction.description }}</span>
+    </div>
+    <div class="summary-row">
+        <span class="summary-label">Date</span>
+        <span class="summary-value">{{ transaction.created_at|date:"d/m/Y à H:i" }}</span>
+    </div>
+</div>
+
+<form class="rejection-form" method="post">
+    {% csrf_token %}
+    
+    <div class="form-group">
+        <label class="form-label" for="reason">Motif du rejet *</label>
+        <textarea id="reason" name="rejection_reason" class="form-input" rows="4" placeholder="Expliquez pourquoi vous rejetez cette transaction..." required></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label" for="fee">Frais de rejet ({{ transaction.account.currency|currency_symbol }})</label>
+        <input type="number" id="fee" name="rejection_fee" class="form-input" step="0.01" min="0" value="0.00" placeholder="0.00">
+        <p style="font-size: 12px; color: var(--text-gray); margin-top: 6px;">
+            Laissez à 0 si aucun frais ne s'applique
+        </p>
+    </div>
+    
+    <button type="submit" class="submit-btn">
+        ✗ Rejeter la transaction
+    </button>
+</form>
+{% endblock %}

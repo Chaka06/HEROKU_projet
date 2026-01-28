@@ -1,0 +1,498 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MaBanque{% endblock %}</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --primary-red: {{ bank_primary_color|default:"#e63946" }};
+            --primary-dark: {{ bank_secondary_color|default:"#d62828" }};
+            --bg-light: #f8f9fa;
+            --bg-gray: #e9ecef;
+            --text-dark: #1a1a1a;
+            --text-gray: #757575;
+            --text-light: #9e9e9e;
+            --success: #2e7d32;
+            --warning: #f57c00;
+            --info: #1976d2;
+            --border: #e0e0e0;
+            --white: #ffffff;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Mobile First - Styles de base */
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête - Mobile */
+        .header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+            padding: 16px 20px;
+            color: var(--white);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--white);
+        }
+
+        .logo i {
+            font-size: 28px;
+        }
+
+        .logout-btn, .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: var(--white);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover, .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .logout-btn i, .back-btn i {
+            font-size: 18px;
+        }
+
+        .logout-btn span, .back-btn span {
+            display: none;
+        }
+
+        /* Loader/Spinner */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--white);
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Menu de navigation */
+        .nav-menu {
+            display: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--white);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* Contenu Principal */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .content-wrapper {
+            /* Pas de style wrapper sur mobile */
+        }
+
+        /* Breakpoint Tablette - 768px */
+        @media (min-width: 768px) {
+            .header {
+                border-radius: var(--radius-lg);
+                margin: 20px;
+                position: static;
+            }
+
+            .header-top {
+                margin-bottom: 20px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo i {
+                font-size: 36px;
+            }
+
+            .logout-btn, .back-btn {
+                padding: 10px 18px;
+                font-size: 15px;
+            }
+
+            .logout-btn span, .back-btn span {
+                display: inline;
+            }
+
+            .main-content {
+                padding: 0 20px 20px 20px;
+            }
+        }
+
+        /* Breakpoint Desktop - 1024px */
+        @media (min-width: 1024px) {
+            body {
+                background: var(--bg-gray);
+            }
+
+            .container {
+                display: grid;
+                grid-template-columns: 340px 1fr;
+                gap: 24px;
+                max-width: 1600px;
+                margin: 0 auto;
+                padding: 24px;
+                min-height: 100vh;
+                align-items: start;
+            }
+
+            .header {
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                position: sticky;
+                top: 24px;
+                height: auto;
+                padding: 32px 24px;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+                position: static;
+            }
+
+            .logo {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                font-size: 22px;
+            }
+
+            .logo i {
+                font-size: 42px;
+            }
+
+            /* Menu de navigation visible sur desktop */
+            .nav-menu {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 32px;
+                margin-bottom: 24px;
+            }
+
+            .logout-btn, .back-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px 20px;
+                margin-top: auto;
+                position: static;
+            }
+
+            .main-content {
+                padding: 0;
+            }
+
+            .content-wrapper {
+                background: var(--white);
+                border-radius: var(--radius-lg);
+                padding: 32px;
+                box-shadow: var(--shadow-sm);
+            }
+        }
+
+        /* Grand Desktop - 1280px */
+        @media (min-width: 1280px) {
+            .container {
+                grid-template-columns: 360px 1fr;
+                gap: 32px;
+                padding: 32px;
+            }
+
+            .header {
+                padding: 40px 28px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo i {
+                font-size: 48px;
+            }
+
+            .content-wrapper {
+                padding: 40px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner">
+                <img src="{% static 'banking/images/loader.png' %}" alt="Chargement">
+            </div>
+            <div class="loading-text">Chargement...</div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <!-- En-tête / Barre Latérale -->
+        <header class="header">
+            <div class="header-top">
+                <a href="{% url 'banking:dashboard' %}" class="logo">
+                    {% if bank_logo %}
+                    <img src="{{ bank_logo }}" alt="{{ bank_name }}" style="height: 42px; object-fit: contain;">
+                    {% else %}
+                    <i class='bx bxs-bank'></i>
+                    {% endif %}
+                    <span>{{ bank_name }}</span>
+                </a>
+                {% block header_action %}
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'banking:logout' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class='bx bx-log-out'></i>
+                        <span>Déconnexion</span>
+                    </button>
+                </form>
+                {% endif %}
+                {% endblock %}
+            </div>
+            
+            <!-- Menu de navigation (desktop uniquement) -->
+            {% if user.is_authenticated %}
+            <nav class="nav-menu">
+                <a href="{% url 'banking:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class='bx bx-home'></i>
+                    <span>Accueil</span>
+                </a>
+                <a href="{% url 'banking:transactions' %}" class="nav-item {% if request.resolver_match.url_name == 'transactions' %}active{% endif %}">
+                    <i class='bx bx-list-ul'></i>
+                    <span>Transactions</span>
+                </a>
+                <a href="{% url 'banking:transfer' %}" class="nav-item {% if request.resolver_match.url_name == 'transfer' %}active{% endif %}">
+                    <i class='bx bx-transfer-alt'></i>
+                    <span>Virement Externe</span>
+                </a>
+                <a href="{% url 'banking:internal_transfer' %}" class="nav-item {% if request.resolver_match.url_name == 'internal_transfer' %}active{% endif %}">
+                    <i class='bx bx-refresh'></i>
+                    <span>Virement Interne</span>
+                </a>
+                <a href="{% url 'banking:beneficiaries' %}" class="nav-item {% if request.resolver_match.url_name == 'beneficiaries' %}active{% endif %}">
+                    <i class='bx bx-user-plus'></i>
+                    <span>Bénéficiaires</span>
+                </a>
+                <a href="{% url 'banking:rib' %}" class="nav-item {% if request.resolver_match.url_name == 'rib' %}active{% endif %}">
+                    <i class='bx bx-credit-card-front'></i>
+                    <span>RIB</span>
+                </a>
+                <a href="{% url 'banking:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <i class='bx bx-user'></i>
+                    <span>Profil</span>
+                </a>
+                <a href="{% url 'banking:settings' %}" class="nav-item {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                    <i class='bx bx-cog'></i>
+                    <span>Paramètres</span>
+                </a>
+            </nav>
+            {% endif %}
+            
+            {% block header_content %}{% endblock %}
+        </header>
+
+        <!-- Contenu Principal -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Fonction globale pour afficher le loader
+        function showLoader(text = 'Chargement...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = overlay.querySelector('.loading-text');
+            loadingText.textContent = text;
+            overlay.classList.add('show');
+        }
+
+        function hideLoader() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
+        }
+
+        // Fonction pour afficher les toasts
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            
+            const icons = {
+                'success': 'bx-check-circle',
+                'error': 'bx-error-circle',
+                'warning': 'bx-error',
+                'info': 'bx-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class='bx ${icons[type]} toast-icon'></i>
+                <div class="toast-message">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Retirer après 3 secondes
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Afficher les messages Django comme toasts
+        {% if messages %}
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+            showToast('{{ message|escapejs }}', '{{ message.tags|default:"info" }}');
+            {% endfor %}
+        });
+        {% endif %}
+
+        // Ajouter le loader sur tous les formulaires
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sur les soumissions de formulaires
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitBtn && !submitBtn.hasAttribute('data-no-loader')) {
+                        // Délai minimum de 4 secondes pour les virements
+                        const isTransferForm = form.action.includes('transfer') || form.classList.contains('transfer-form');
+                        const delay = isTransferForm ? 4000 : 3000;
+                        showLoader('Traitement en cours...');
+                        
+                        // Cacher automatiquement après le délai minimum
+                        setTimeout(hideLoader, delay);
+                    }
+                });
+            });
+
+            // Sur les liens de téléchargement
+            document.querySelectorAll('a[href*="download"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    showLoader('Génération du PDF...');
+                    setTimeout(hideLoader, 3000);
+                });
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

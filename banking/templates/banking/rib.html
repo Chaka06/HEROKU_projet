@@ -1,0 +1,279 @@
+{% extends 'banking/base.html' %}
+
+{% block title %}RIB - MaBanque{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:dashboard' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-gray);
+        margin-bottom: 20px;
+    }
+
+    .rib-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+
+    .rib-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .rib-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .rib-logo i {
+        font-size: 36px;
+        color: var(--primary-red);
+    }
+
+    .rib-logo-text h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .rib-logo-text p {
+        font-size: 12px;
+        color: var(--text-gray);
+    }
+
+    .account-badge {
+        background: var(--bg-light);
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-gray);
+    }
+
+    .rib-info-section {
+        margin-bottom: 20px;
+    }
+
+    .rib-info-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .rib-info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--bg-gray);
+    }
+
+    .rib-info-item:last-child {
+        border-bottom: none;
+    }
+
+    .rib-info-label {
+        font-size: 14px;
+        color: var(--text-gray);
+        font-weight: 500;
+    }
+
+    .rib-info-value {
+        font-size: 14px;
+        color: var(--text-dark);
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        text-align: right;
+    }
+
+    .actions-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        color: var(--text-dark);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .action-button:hover {
+        border-color: var(--primary-red);
+        color: var(--primary-red);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .action-button i {
+        font-size: 20px;
+    }
+
+    .action-button.primary {
+        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        border-color: var(--primary-red);
+    }
+
+    .action-button.primary:hover {
+        color: var(--white);
+        box-shadow: var(--shadow-lg);
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 28px;
+        }
+
+        .rib-card {
+            padding: 28px;
+        }
+
+        .actions-buttons {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .rib-card {
+            padding: 32px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Relevé d'Identité Bancaire</h1>
+    <p class="page-subtitle">Consultez et téléchargez votre RIB</p>
+</div>
+
+{% for account in user_accounts %}
+<div class="rib-card">
+    <div class="rib-header">
+        <div class="rib-logo">
+            <i class='bx bxs-bank'></i>
+            <div class="rib-logo-text">
+                <h3>MaBanque</h3>
+                <p>Banque en ligne</p>
+            </div>
+        </div>
+        <div class="account-badge">{{ account.get_account_type_display }}</div>
+    </div>
+
+    <div class="rib-info-section">
+        <h4 class="rib-info-title">Informations du titulaire</h4>
+        <div class="rib-info-item">
+            <span class="rib-info-label">Titulaire</span>
+            <span class="rib-info-value">{{ user.get_full_name|upper|default:user.username|upper }}</span>
+        </div>
+        <div class="rib-info-item">
+            <span class="rib-info-label">Adresse</span>
+            <span class="rib-info-value">{{ user.profile.address|default:"Non renseignée" }}</span>
+        </div>
+    </div>
+
+    <div class="rib-info-section">
+        <h4 class="rib-info-title">Coordonnées bancaires</h4>
+        <div class="rib-info-item">
+            <span class="rib-info-label">IBAN</span>
+            <span class="rib-info-value">{{ account.iban }}</span>
+        </div>
+        <div class="rib-info-item">
+            <span class="rib-info-label">BIC</span>
+            <span class="rib-info-value">{{ account.bic }}</span>
+        </div>
+        <div class="rib-info-item">
+            <span class="rib-info-label">Numéro de compte</span>
+            <span class="rib-info-value">{{ account.account_number }}</span>
+        </div>
+    </div>
+
+    <div class="actions-buttons">
+        <button class="action-button primary" onclick="downloadRIB('{{ account.id }}')">
+            <i class='bx bx-download'></i>
+            Télécharger
+        </button>
+        <button class="action-button" onclick="printRIB()">
+            <i class='bx bx-printer'></i>
+            Imprimer
+        </button>
+        <button class="action-button" onclick="shareRIB('{{ account.iban }}')">
+            <i class='bx bx-share-alt'></i>
+            Partager
+        </button>
+        <button class="action-button" onclick="copyIBAN('{{ account.iban }}')">
+            <i class='bx bx-copy'></i>
+            Copier IBAN
+        </button>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function downloadRIB(accountId) {
+        alert('Téléchargement du RIB en cours...');
+        // Ici vous ajouterez la logique pour générer et télécharger le PDF du RIB
+    }
+
+    function printRIB() {
+        window.print();
+    }
+
+    function shareRIB(iban) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Mon RIB - MaBanque',
+                text: `IBAN: ${iban}`,
+            });
+        } else {
+            alert('Partage non disponible sur ce navigateur');
+        }
+    }
+
+    function copyIBAN(iban) {
+        navigator.clipboard.writeText(iban).then(() => {
+            alert('IBAN copié dans le presse-papiers!');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,363 @@
+{% extends 'banking/base.html' %}
+{% load banking_tags %}
+
+{% block title %}Historique des Transactions - {{ bank_name }}{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:dashboard' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-gray);
+        margin-bottom: 20px;
+    }
+
+    .filter-bar {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-select {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        background: var(--white);
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-red);
+    }
+
+    .section-date {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        margin-top: 20px;
+    }
+
+    .section-date:first-child {
+        margin-top: 0;
+    }
+
+    .transaction-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .transaction-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(2px);
+    }
+
+    .transaction-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .transaction-icon.deposit {
+        background: #e8f5e9;
+        color: var(--success);
+    }
+
+    .transaction-icon.payment {
+        background: #fff3e0;
+        color: var(--warning);
+    }
+
+    .transaction-icon.purchase {
+        background: #e3f2fd;
+        color: var(--info);
+    }
+
+    .transaction-icon.transfer {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .transaction-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .transaction-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+    }
+
+    .transaction-subtitle {
+        font-size: 13px;
+        color: var(--text-gray);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .transaction-date {
+        font-size: 12px;
+        color: var(--text-light);
+        margin-top: 4px;
+    }
+
+    .transaction-amount-wrapper {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .transaction-amount {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .transaction-amount.positive {
+        color: var(--success);
+    }
+
+    .transaction-amount.negative {
+        color: var(--text-dark);
+    }
+
+    .transaction-balance {
+        font-size: 12px;
+        color: var(--text-gray);
+    }
+
+    .transaction-arrow {
+        color: var(--text-light);
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .stat-value.positive {
+        color: var(--success);
+    }
+
+    .stat-value.negative {
+        color: var(--primary-red);
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 28px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .transactions-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .section-date {
+            grid-column: 1 / -1;
+        }
+
+        .transaction-card {
+            margin-bottom: 0;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .transactions-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Historique des Transactions</h1>
+    <p class="page-subtitle">Consultez toutes vos opérations bancaires</p>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Transactions</div>
+        <div class="stat-value">{{ transactions|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Dépôts</div>
+        <div class="stat-value positive">{{ deposits_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Retraits</div>
+        <div class="stat-value negative">{{ withdrawals_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Solde Actuel</div>
+        <div class="stat-value">{{ total_balance }}</div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="filter-bar">
+    <select class="filter-select" id="typeFilter">
+        <option value="">Tous les types</option>
+        <option value="deposit">Dépôts</option>
+        <option value="transfer">Virements</option>
+        <option value="payment">Paiements</option>
+        <option value="purchase">Achats</option>
+    </select>
+    
+    <select class="filter-select" id="accountFilter">
+        <option value="">Tous les comptes</option>
+        {% for account in user_accounts %}
+        <option value="{{ account.id }}">{{ account.get_account_type_display }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Liste des transactions -->
+<div class="transactions-list">
+    {% regroup transactions by created_at|date:"l, j M Y" as transaction_list %}
+    {% for transaction_group in transaction_list %}
+    <div class="section-date">{{ transaction_group.grouper|upper }}</div>
+    
+    {% for transaction in transaction_group.list %}
+    <a href="{% url 'banking:transaction_detail' transaction.id %}" class="transaction-card" data-type="{{ transaction.transaction_type|lower }}" data-account="{{ transaction.account.id }}" style="text-decoration: none; color: inherit;">
+        <div class="transaction-icon {{ transaction.transaction_type|lower }}">
+            {% if transaction.transaction_type == 'DEPOSIT' %}
+            <i class='bx bx-down-arrow-circle'></i>
+            {% elif transaction.transaction_type == 'PAYMENT' %}
+            <i class='bx bx-receipt'></i>
+            {% elif transaction.transaction_type == 'PURCHASE' or transaction.transaction_type == 'ONLINE_PURCHASE' %}
+            <i class='bx bx-shopping-bag'></i>
+            {% elif transaction.transaction_type == 'TRANSFER' %}
+            <i class='bx bx-transfer-alt'></i>
+            {% else %}
+            <i class='bx bx-wallet'></i>
+            {% endif %}
+        </div>
+        <div class="transaction-info">
+            <div class="transaction-title">{{ transaction.get_transaction_type_display }}</div>
+            <div class="transaction-subtitle">{{ transaction.description }}</div>
+            <div class="transaction-date">{{ transaction.created_at|date:"d/m/Y à H:i" }}</div>
+        </div>
+        <div class="transaction-amount-wrapper">
+            <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">
+                {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}
+            </div>
+            <div class="transaction-balance">Solde: {{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
+        </div>
+        <i class='bx bx-chevron-right transaction-arrow'></i>
+    </a>
+    {% endfor %}
+    {% empty %}
+    <p style="color: var(--text-gray); text-align: center; padding: 40px;">
+        Aucune transaction disponible
+    </p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtres
+    document.getElementById('typeFilter').addEventListener('change', applyFilters);
+    document.getElementById('accountFilter').addEventListener('change', applyFilters);
+    
+    function applyFilters() {
+        const typeFilter = document.getElementById('typeFilter').value;
+        const accountFilter = document.getElementById('accountFilter').value;
+        const transactions = document.querySelectorAll('.transaction-card');
+        
+        transactions.forEach(transaction => {
+            const type = transaction.getAttribute('data-type');
+            const account = transaction.getAttribute('data-account');
+            
+            let show = true;
+            
+            if (typeFilter && type !== typeFilter) {
+                show = false;
+            }
+            
+            if (accountFilter && account !== accountFilter) {
+                show = false;
+            }
+            
+            transaction.style.display = show ? 'flex' : 'none';
+        });
+    }
+</script>
+{% endblock %}

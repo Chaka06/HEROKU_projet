@@ -1,0 +1,164 @@
+{% extends 'banking/base.html' %}
+
+{% block title %}Notifications - {{ bank_name }}{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:settings' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-gray);
+        margin-bottom: 20px;
+    }
+
+    .notification-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .notification-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .notification-card.unread {
+        background: #f0f7ff;
+        border-color: var(--info);
+    }
+
+    .notification-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .notification-icon.suspended { background: #fff3e0; color: var(--warning); }
+    .notification-icon.unblocked { background: #e8f5e9; color: var(--success); }
+    .notification-icon.transaction { background: #e3f2fd; color: var(--info); }
+    .notification-icon.security { background: #ffebee; color: #c62828; }
+    .notification-icon.info { background: #f3e5f5; color: #7b1fa2; }
+    .notification-icon.admin { background: #ffe0e0; color: #d32f2f; }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+    }
+
+    .notification-message {
+        font-size: 13px;
+        color: var(--text-gray);
+        line-height: 1.5;
+    }
+
+    .notification-date {
+        font-size: 11px;
+        color: var(--text-light);
+        margin-top: 8px;
+    }
+
+    .no-notifications {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-gray);
+    }
+
+    .no-notifications i {
+        font-size: 64px;
+        color: var(--text-light);
+        margin-bottom: 16px;
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 28px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Notifications</h1>
+    <p class="page-subtitle">Consultez vos notifications bancaires</p>
+</div>
+
+{% if notifications %}
+    {% for notification in notifications %}
+    <div class="notification-card {% if not notification.is_read %}unread{% endif %}" onclick="markAsRead({{ notification.id }})">
+        <div class="notification-header">
+            <div class="notification-icon {{ notification.notification_type|lower|cut:'_' }}">
+                {% if 'SUSPENDED' in notification.notification_type %}
+                <i class='bx bx-error-circle'></i>
+                {% elif 'UNBLOCKED' in notification.notification_type %}
+                <i class='bx bx-check-circle'></i>
+                {% elif 'TRANSACTION' in notification.notification_type %}
+                <i class='bx bx-transfer-alt'></i>
+                {% elif 'SECURITY' in notification.notification_type %}
+                <i class='bx bx-shield'></i>
+                {% elif 'ADMIN' in notification.notification_type %}
+                <i class='bx bx-message-square-dots'></i>
+                {% else %}
+                <i class='bx bx-info-circle'></i>
+                {% endif %}
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">{{ notification.title }}</div>
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-date">{{ notification.created_at|date:"d/m/Y à H:i" }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="no-notifications">
+    <i class='bx bx-bell-off'></i>
+    <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Aucune notification</p>
+    <p style="font-size: 14px;">Vous n'avez pas de notifications pour le moment</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markAsRead(notificationId) {
+        // Ici vous pouvez ajouter une requête AJAX pour marquer comme lu
+        console.log('Notification marquée comme lue:', notificationId);
+    }
+</script>
+{% endblock %}

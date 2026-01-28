@@ -1,0 +1,463 @@
+═══════════════════════════════════════════════════════════
+    MABANQUE - SYSTÈME BANCAIRE MULTI-BANQUES
+    Gestion Centralisée avec 30 Banques Internationales
+═══════════════════════════════════════════════════════════
+
+DÉMARRAGE RAPIDE
+----------------
+
+1. Activer l'environnement virtuel :
+   cd /Users/mac.chaka/Desktop/HEROKU
+   source venv/bin/activate
+
+2. Lancer le serveur :
+   python manage.py runserver
+
+3. Ouvrir le navigateur :
+   http://127.0.0.1:8000/
+
+
+CONNEXION ADMINISTRATEUR
+-------------------------
+Username : admin
+Password : admin
+URL Admin : http://127.0.0.1:8000/admin/
+
+
+INTERFACE ADMIN - STRUCTURE
+----------------------------
+
+L'admin Django affiche UNE SEULE section :
+
+┌─────────────────────────────────────────┐
+│  Administration MaBanque                │
+├─────────────────────────────────────────┤
+│  Authentification et autorisation       │
+│  ═══════════════════════════════════════│
+│  👥 Utilisateurs   [Ajouter] [Liste]    │
+│  🏦 Banques        [Ajouter] [Liste]    │
+│  💸 Transactions   [Ajouter] [Liste]    │
+└─────────────────────────────────────────┘
+
+
+CRÉER UN UTILISATEUR - FORMULAIRE SIMPLIFIÉ
+--------------------------------------------
+
+1. Se connecter à l'admin : http://127.0.0.1:8000/admin/
+   Username: admin
+   Password: admin
+
+2. Cliquer sur "Utilisateurs" > "AJOUTER UN UTILISATEUR"
+
+3. Remplir UNIQUEMENT les informations demandées :
+
+   ┌─ INFORMATIONS DE CONNEXION ──────────┐
+   │ Nom d'utilisateur : client2          │
+   │ Mot de passe      : ••••••••         │
+   │ Confirmation      : ••••••••         │
+   └──────────────────────────────────────┘
+
+   ┌─ INFORMATIONS PERSONNELLES ──────────┐
+   │ Prénom : Marie                       │
+   │ Nom    : Martin                      │
+   │ Email  : marie.martin@email.com      │
+   └──────────────────────────────────────┘
+
+   ┌─ LOCALISATION ───────────────────────┐
+   │ Pays  : France                       │
+   │ Ville : Paris                        │
+   │                                      │
+   │ ⚠️ L'IBAN sera généré selon le pays!│
+   │ France → FR76...                     │
+   │ Italie → IT...                       │
+   │ Allemagne → DE...                    │
+   └──────────────────────────────────────┘
+
+   ┌─ CONFIGURATION BANCAIRE ─────────────┐
+   │ Banque : [Liste déroulante]          │
+   │                                      │
+   │ Choix parmi 30 banques :             │
+   │ - JPMorgan Chase (USA) 🔵           │
+   │ - HSBC (UK) 🔴                      │
+   │ - BNP Paribas (France) 🟢           │
+   │ - Deutsche Bank (Allemagne) 🔵      │
+   │ - etc. (30 banques au total)        │
+   └──────────────────────────────────────┘
+
+   ┌─ COMPTES À CRÉER ────────────────────┐
+   │ ☑ Créer un Compte Courant            │
+   │   → Solde initial : 1000.00 €        │
+   │                                      │
+   │ ☐ Créer un Compte Épargne            │
+   │   → Solde initial : 5000.00 €        │
+   │                                      │
+   │ Note: Vous pouvez cocher les 2!      │
+   └──────────────────────────────────────┘
+
+   ┌─ STATUT DU COMPTE ───────────────────┐
+   │ ⚪ Actif                              │
+   │ ⚪ Suspendu                           │
+   │ ⚪ Fermé                              │
+   │                                      │
+   │ Si SUSPENDU :                        │
+   │ Motif de suspension :                │
+   │ ┌─────────────────────────────────┐  │
+   │ │ Non-paiement des frais          │  │
+   │ │ bancaires mensuels              │  │
+   │ └─────────────────────────────────┘  │
+   │                                      │
+   │ Frais de déblocage : 50.00 € (opt.)  │
+   └──────────────────────────────────────┘
+
+4. Cliquer sur "ENREGISTRER"
+
+5. LE SYSTÈME GÉNÈRE AUTOMATIQUEMENT :
+   ✅ IBAN selon le pays (FR76... pour France, IT... pour Italie, etc.)
+   ✅ BIC/SWIFT selon la banque choisie
+   ✅ Numéro de compte unique
+   ✅ Devise selon le pays (EUR, USD, GBP, etc.)
+   ✅ Carte(s) Mastercard
+   ✅ Transactions d'exemple (si compte actif)
+   ✅ 3 Bénéficiaires avec IBAN du même pays
+
+
+CE QUI EST CRÉÉ AUTOMATIQUEMENT (DÉTAILS)
+--------------------------------
+
+Selon vos choix, le système crée :
+
+✓ PROFIL UTILISATEUR
+  - Pays, Ville, Adresse, Téléphone
+  - 500-1000 points de récompenses
+
+✓ COMPTE(S) BANCAIRE(S)
+  - Type(s) choisi(s) : Courant et/ou Épargne
+  - IBAN français (FR76...)
+  - BIC/SWIFT de la banque
+  - Solde(s) initial(aux) défini(s)
+  - Statut : Actif/Suspendu/Fermé
+
+✓ CARTE(S) BANCAIRE(S)
+  - 1 carte Mastercard Débit par compte
+  - Numéro unique 16 chiffres
+  - Expiration : 12/28
+  - CVV : 3 chiffres
+
+✓ TRANSACTIONS D'EXEMPLE (si compte actif)
+  - Dépôt : +780,00€
+  - Paiement : -777,36€
+  - Achat : -8,95€
+  - Achat : -26,38€
+
+✓ BÉNÉFICIAIRES
+  - 3 bénéficiaires pré-enregistrés
+  - IBAN automatiques
+
+
+PERSONNALISATION PAR BANQUE
+----------------------------
+
+🎨 Les couleurs de l'interface s'adaptent automatiquement :
+
+Exemple avec HSBC (Rouge) :
+  Header : Rouge #DB0011
+  Boutons : Rouge #DB0011
+  
+Exemple avec BNP Paribas (Vert) :
+  Header : Vert #009464
+  Boutons : Vert #009464
+
+Exemple avec Deutsche Bank (Bleu) :
+  Header : Bleu #0018A8
+  Boutons : Bleu #0018A8
+
+✓ Le nom de la banque s'affiche dans le header
+✓ Le logo de la banque s'affiche (si uploadé)
+✓ Toute l'interface prend les couleurs de la banque
+
+
+COMPTE SUSPENDU - MODAL AUTOMATIQUE
+------------------------------------
+
+Si un compte est créé avec le statut "Suspendu" :
+
+1. L'utilisateur se connecte normalement
+2. Sur le dashboard, un modal s'affiche AUTOMATIQUEMENT
+3. Le modal contient :
+   - ⚠️ Titre : "Compte Suspendu"
+   - 📝 Motif de suspension
+   - 💰 Frais de déblocage (si > 0€)
+   - Message personnalisé
+4. L'utilisateur peut fermer le modal
+5. Le modal se ré-affiche à chaque chargement du dashboard
+
+
+GESTION DES VIREMENTS (ADMIN)
+------------------------------
+
+1. Aller dans "Transactions" > "Ajouter une transaction"
+
+2. Remplir :
+   - Compte : [Sélectionner le compte de l'utilisateur]
+   - Type de transaction :
+     • DEPOSIT (Dépôt) → Solde +
+     • TRANSFER (Virement) → Solde -
+     • PAYMENT (Paiement) → Solde -
+     • PURCHASE (Achat) → Solde -
+   - Montant : 100.00 €
+   - Description : "Virement reçu"
+   - Statut : COMPLETED
+
+3. Enregistrer
+
+4. Le solde du compte sera automatiquement :
+   - Augmenté (si DEPOSIT)
+   - Diminué (si autre type)
+
+5. La transaction apparaît dans l'historique
+
+
+LES 30 BANQUES DISPONIBLES
+---------------------------
+
+🌍 AMÉRIQUE DU NORD (10 banques)
+  1. JPMorgan Chase (USA) - Bleu #117ACA
+  2. Bank of America (USA) - Bleu #012169 / Rouge #E31837
+  3. Wells Fargo (USA) - Rouge #D71E28 / Jaune #FFCD41
+  4. Citibank (USA) - Bleu #003F72
+  5. Goldman Sachs (USA) - Bleu #5596E6
+  6. Morgan Stanley (USA) - Bleu #00A1DE
+  7. Capital One (USA) - Bleu #004879
+  8. Royal Bank of Canada - Bleu #005DAA / Jaune #FFD520
+  9. Toronto-Dominion Bank - Vert #00843D
+  10. Scotiabank (Canada) - Rouge #EC1C24
+
+🌏 ASIE (11 banques)
+  11. ICBC (Chine) - Rouge #C8161D
+  12. China Construction Bank - Bleu #003F87
+  13. Agricultural Bank of China - Vert #00823B
+  14. Bank of China - Rouge #C8161D
+  15. China Merchants Bank - Rouge #ED1B2E
+  16. Mitsubishi UFJ Financial (Japon) - Rouge #E60012
+  17. Sumitomo Mitsui Financial (Japon) - Vert #00923F
+  18. Mizuho Financial Group (Japon) - Bleu #004A9C
+  19. HDFC Bank (Inde) - Bleu #004C8F
+  20. ICICI Bank (Inde) - Orange #F37021
+  21. State Bank of India - Bleu #22409A
+  22. DBS Group (Singapour) - Rouge #DC1431
+
+🇪🇺 EUROPE (13 banques)
+  23. HSBC (UK) - Rouge #DB0011
+  24. BNP Paribas (France) - Vert #009464
+  25. Crédit Agricole (France) - Bleu-vert #009B9D
+  26. Société Générale (France) - Rouge #E9041E
+  27. Banco Santander (Espagne) - Rouge #EC0000
+  28. BBVA (Espagne) - Bleu #004481
+  29. Deutsche Bank (Allemagne) - Bleu #0018A8
+  30. ING Group (Pays-Bas) - Orange #FF6200
+  31. UBS (Suisse) - Rouge #E60000
+  32. UniCredit (Italie) - Rouge #E30613
+  33. Intesa Sanpaolo (Italie) - Bleu #003366
+  34. Barclays (UK) - Bleu #00AEEF
+  35. Standard Chartered (UK) - Vert #007A33
+
+🌍 AUTRES (16 banques)
+  36. Commonwealth Bank (Australie) - Jaune #FFCC00
+  37. Westpac (Australie) - Rouge #DA1710
+  38. ANZ (Australie) - Bleu #007CB0
+  39. Al Rajhi Bank (Arabie Saoudite) - Vert #006747
+  40. Qatar National Bank - Violet #68166C
+  41. First Abu Dhabi Bank (EAU) - Bleu #004A98
+  42. Standard Bank (Afrique du Sud) - Bleu #003087
+  43. Banco do Brasil - Jaune #FFCC00 / Bleu #003D7A
+  44. Itaú Unibanco (Brésil) - Orange #EC7000
+  45. Banco Bradesco (Brésil) - Rouge #CC092F
+  46. Nordea (Finlande) - Bleu #0000A0
+  47. Credit Suisse (Suisse) - Bleu #003D7A
+  48. Rabobank (Pays-Bas) - Orange #FF6200
+  49. National Bank of Canada - Rouge #D71920
+  50. BMO Bank of Montreal (Canada) - Bleu #0075C9
+  51. Lloyds Banking Group (UK) - Vert #006638
+
+
+MODIFIER UN UTILISATEUR
+------------------------
+
+1. Cliquer sur un utilisateur dans la liste
+2. Vous verrez 3 sections INLINE :
+   
+   ┌─ PROFIL BANCAIRE ─────────────────┐
+   │ ✏️ Téléphone                      │
+   │ ✏️ Adresse, Ville, Pays           │
+   │ ✏️ Date de naissance              │
+   │ 👁️ Points de récompenses          │
+   │ ✏️ Préférences (notifs, langue)   │
+   └───────────────────────────────────┘
+   
+   ┌─ COMPTES BANCAIRES ───────────────┐
+   │ 🏦 Banque                         │
+   │ 📋 Type (Courant/Épargne)         │
+   │ 👁️ Numéro de compte              │
+   │ 👁️ IBAN, BIC                     │
+   │ 👁️ Solde actuel                  │
+   │ ✏️ Statut (Actif/Suspendu/Fermé)  │
+   │ ✏️ Motif suspension               │
+   │ ✏️ Frais déblocage                │
+   └───────────────────────────────────┘
+   
+   ┌─ BÉNÉFICIAIRES ───────────────────┐
+   │ ✏️ Nom, IBAN, BIC, Email          │
+   │ ✏️ Favori (oui/non)               │
+   │ ➕ Ajouter des bénéficiaires      │
+   └───────────────────────────────────┘
+
+
+EFFECTUER UN VIREMENT (ADMIN)
+------------------------------
+
+Pour créditer ou débiter un compte :
+
+1. Aller dans "Transactions" > "Ajouter une transaction"
+
+2. Sélectionner :
+   ┌────────────────────────────────────┐
+   │ Compte : [Client X - Compte Y]     │
+   │                                    │
+   │ Type de transaction :              │
+   │  • DEPOSIT → Crédit (+)            │
+   │  • TRANSFER → Débit (-)            │
+   │  • PAYMENT → Débit (-)             │
+   │  • PURCHASE → Débit (-)            │
+   │                                    │
+   │ Montant : 500.00 €                 │
+   │                                    │
+   │ Description : Virement reçu        │
+   │ Référence : VIR2024001 (opt.)      │
+   │                                    │
+   │ Statut : COMPLETED                 │
+   └────────────────────────────────────┘
+
+3. Cliquer sur "Enregistrer"
+
+4. AUTOMATIQUEMENT :
+   ✅ Solde du compte mis à jour
+   ✅ Transaction enregistrée dans l'historique
+   ✅ Visible sur le dashboard client
+   ✅ Message de confirmation affiché
+
+
+EXEMPLES D'UTILISATION
+-----------------------
+
+EXEMPLE 1 : Créer un client HSBC actif
+  - Nom d'utilisateur : john_doe
+  - Prénom : John / Nom : Doe
+  - Email : john@email.com
+  - Pays : Royaume-Uni / Ville : Londres
+  - Banque : HSBC
+  - ☑ Compte Courant → 2500€
+  - Statut : ⚪ Actif
+  → Interface du client sera ROUGE HSBC 🔴
+
+EXEMPLE 2 : Créer un client BNP suspendu
+  - Nom d'utilisateur : marie_s
+  - Prénom : Marie / Nom : Sanchez  
+  - Email : marie@email.com
+  - Pays : France / Ville : Paris
+  - Banque : BNP Paribas
+  - ☑ Compte Courant → 1000€
+  - ☑ Compte Épargne → 8000€
+  - Statut : ⚪ Suspendu
+  - Motif : "Non-paiement des frais bancaires"
+  - Frais : 75.00 €
+  → Interface VERTE BNP 🟢
+  → Modal de suspension au login
+
+EXEMPLE 3 : Virement vers un client
+  Transactions > Ajouter
+  - Compte : john_doe - Compte Courant
+  - Type : DEPOSIT (Dépôt)
+  - Montant : 1500.00 €
+  - Description : "Virement de l'employeur"
+  → Solde passe de 2500€ à 4000€
+
+
+FONCTIONNALITÉS CLÉS
+---------------------
+
+✓ 30 BANQUES INTERNATIONALES pré-configurées
+✓ THÈME DYNAMIQUE selon la banque choisie
+✓ MULTI-COMPTES par utilisateur (Courant + Épargne)
+✓ STATUTS DE COMPTE (Actif/Suspendu/Fermé)
+✓ MODAL DE SUSPENSION automatique
+✓ GESTION DES VIREMENTS depuis l'admin
+✓ HISTORIQUE DES TRANSACTIONS complet
+✓ DESIGN RESPONSIVE (mobile, tablette, desktop)
+
+
+PAGES UTILISATEUR
+-----------------
+
+Après connexion, l'utilisateur voit :
+
+/ → Dashboard
+  - Carte bancaire (couleurs de sa banque)
+  - Solde actuel
+  - Historique transactions
+  - Recherche transactions
+  - Modal si compte suspendu
+
+/transfer/ → Virements
+  - Sélection compte source
+  - Formulaire de virement
+  - Bénéficiaires récents
+
+/rib/ → RIB
+  - Consultation IBAN/BIC
+  - Copie IBAN
+  - Infos bancaires
+
+/settings/ → Paramètres
+  - Profil utilisateur
+  - Préférences
+
+
+COMMANDES UTILES
+----------------
+
+# Lancer le serveur
+python manage.py runserver
+
+# Initialiser/Réinitialiser les banques
+python manage.py init_banks
+
+# Créer un superutilisateur
+python manage.py createsuperuser
+
+# Vérifier la configuration
+python manage.py check
+
+
+DÉPANNAGE
+---------
+
+Port déjà utilisé :
+  lsof -ti:8000 | xargs kill -9
+  python manage.py runserver
+
+Réinitialiser complètement :
+  rm db.sqlite3
+  rm -rf banking/migrations/0*.py
+  python manage.py makemigrations
+  python manage.py migrate
+  python manage.py init_banks
+  python manage.py createsuperuser
+
+Les banques n'apparaissent pas :
+  python manage.py init_banks
+
+
+═══════════════════════════════════════════════════════════
+✅ Système multi-banques opérationnel!
+   30 banques | Thème dynamique | Comptes multiples
+═══════════════════════════════════════════════════════════

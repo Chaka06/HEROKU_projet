@@ -1,0 +1,184 @@
+{% extends 'banking/base.html' %}
+
+{% block title %}Mes Bénéficiaires - {{ bank_name }}{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:transfer' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-gray);
+        margin-bottom: 20px;
+    }
+
+    .add-beneficiary-btn {
+        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 14px 20px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+
+    .add-beneficiary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .beneficiary-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .beneficiary-card {
+        background: var(--white);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: var(--text-dark);
+    }
+
+    .beneficiary-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(2px);
+    }
+
+    .beneficiary-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: var(--white);
+    }
+
+    .beneficiary-avatar.color-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .beneficiary-avatar.color-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .beneficiary-avatar.color-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .beneficiary-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .beneficiary-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+    }
+
+    .beneficiary-iban {
+        font-size: 13px;
+        color: var(--text-gray);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: 'Courier New', monospace;
+    }
+
+    .beneficiary-email {
+        font-size: 12px;
+        color: var(--text-light);
+        margin-top: 2px;
+    }
+
+    .beneficiary-arrow {
+        color: var(--text-light);
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            font-size: 28px;
+        }
+
+        .beneficiary-list {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .beneficiary-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Mes Bénéficiaires</h1>
+    <p class="page-subtitle">Gérez vos bénéficiaires enregistrés</p>
+</div>
+
+<a href="{% url 'banking:add_beneficiary' %}" class="add-beneficiary-btn">
+    <i class='bx bx-plus'></i>
+    Ajouter un bénéficiaire
+</a>
+
+<div class="beneficiary-list">
+    {% for beneficiary in beneficiaries %}
+    <a href="{% url 'banking:transfer' %}?beneficiary={{ beneficiary.id }}" class="beneficiary-card">
+        <div class="beneficiary-avatar color-{{ forloop.counter|divisibleby:3|yesno:'3,2,1' }}">
+            {{ beneficiary.get_initials }}
+        </div>
+        <div class="beneficiary-info">
+            <div class="beneficiary-name">{{ beneficiary.name }}</div>
+            <div class="beneficiary-iban">{{ beneficiary.iban }}</div>
+            {% if beneficiary.email %}
+            <div class="beneficiary-email">{{ beneficiary.email }}</div>
+            {% endif %}
+        </div>
+        <i class='bx bx-chevron-right beneficiary-arrow'></i>
+    </a>
+    {% empty %}
+    <p style="color: var(--text-gray); text-align: center; padding: 40px;">
+        Aucun bénéficiaire enregistré
+    </p>
+    {% endfor %}
+</div>
+{% endblock %}

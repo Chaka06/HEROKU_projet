@@ -1,0 +1,52 @@
+{% extends 'banking/base.html' %}
+
+{% block title %}Changer la Langue - {{ bank_name }}{% endblock %}
+
+{% block header_action %}
+<a href="{% url 'banking:settings' %}" class="back-btn">
+    <i class='bx bx-arrow-back'></i>
+    <span>Retour</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+    .language-list { display: grid; gap: 12px; }
+    .language-item { background: var(--white); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-sm); border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; text-decoration: none; color: var(--text-dark); }
+    .language-item:hover { border-color: var(--primary-red); box-shadow: var(--shadow-md); }
+    .language-item.active { border-color: var(--primary-red); background: rgba(230, 57, 70, 0.05); }
+    .language-flag { font-size: 32px; }
+    .language-name { font-size: 16px; font-weight: 600; }
+    @media (min-width: 768px) { .page-title { font-size: 28px; } .language-list { grid-template-columns: repeat(2, 1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Changer la Langue</h1>
+<p class="page-subtitle">Sélectionnez la langue de l'interface</p>
+
+<div class="language-list">
+    <a href="?lang=fr" class="language-item {% if current_language == 'fr' %}active{% endif %}">
+        <div class="language-flag">🇫🇷</div>
+        <div class="language-name">Français</div>
+    </a>
+    <a href="?lang=en" class="language-item {% if current_language == 'en' %}active{% endif %}">
+        <div class="language-flag">🇬🇧</div>
+        <div class="language-name">English</div>
+    </a>
+    <a href="?lang=es" class="language-item {% if current_language == 'es' %}active{% endif %}">
+        <div class="language-flag">🇪🇸</div>
+        <div class="language-name">Español</div>
+    </a>
+    <a href="?lang=it" class="language-item {% if current_language == 'it' %}active{% endif %}">
+        <div class="language-flag">🇮🇹</div>
+        <div class="language-name">Italiano</div>
+    </a>
+    <a href="?lang=pl" class="language-item {% if current_language == 'pl' %}active{% endif %}">
+        <div class="language-flag">🇵🇱</div>
+        <div class="language-name">Polski</div>
+    </a>
+</div>
+{% endblock %}
