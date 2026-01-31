@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MaBanque{% endblock %}</title>
+    <meta name="description" content="Plateforme bancaire sécurisée pour se connecter à mon compte">
+    <title>{% block title %}{{ bank_name|default:"Banque en ligne" }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'banking/favicon.svg' %}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         :root {
@@ -33,6 +35,11 @@
             padding: 0;
             box-sizing: border-box;
         }
+        
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
@@ -40,12 +47,22 @@
             color: var(--text-dark);
             line-height: 1.6;
         }
+        
+        * {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        html {
+            overflow-x: hidden;
+        }
 
         /* Mobile First - Styles de base */
         .container {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            max-width: 100vw;
         }
 
         /* En-tête - Mobile */
@@ -74,6 +91,12 @@
             font-weight: 700;
             text-decoration: none;
             color: var(--white);
+        }
+        
+        .logo img {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
         }
 
         .logo i {
@@ -191,6 +214,7 @@
 
         .content-wrapper {
             /* Pas de style wrapper sur mobile */
+            max-width: 100%;
         }
 
         /* Breakpoint Tablette - 768px */
@@ -207,6 +231,10 @@
 
             .logo {
                 font-size: 24px;
+            }
+            
+            .logo img {
+                height: 42px;
             }
 
             .logo i {
@@ -267,6 +295,10 @@
                 gap: 8px;
                 font-size: 22px;
             }
+            
+            .logo img {
+                height: 50px;
+            }
 
             .logo i {
                 font-size: 42px;
@@ -316,6 +348,10 @@
             .logo {
                 font-size: 24px;
             }
+            
+            .logo img {
+                height: 56px;
+            }
 
             .logo i {
                 font-size: 48px;
@@ -348,11 +384,10 @@
             <div class="header-top">
                 <a href="{% url 'banking:dashboard' %}" class="logo">
                     {% if bank_logo %}
-                    <img src="{{ bank_logo }}" alt="{{ bank_name }}" style="height: 42px; object-fit: contain;">
+                    <img src="{{ bank_logo }}" alt="{{ bank_name }}">
                     {% else %}
                     <i class='bx bxs-bank'></i>
                     {% endif %}
-                    <span>{{ bank_name }}</span>
                 </a>
                 {% block header_action %}
                 {% if user.is_authenticated %}
@@ -360,7 +395,7 @@
                     {% csrf_token %}
                     <button type="submit" class="logout-btn">
                         <i class='bx bx-log-out'></i>
-                        <span>Déconnexion</span>
+                        <span>{{ t.Logout }}</span>
                     </button>
                 </form>
                 {% endif %}
@@ -372,35 +407,35 @@
             <nav class="nav-menu">
                 <a href="{% url 'banking:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class='bx bx-home'></i>
-                    <span>Accueil</span>
+                    <span>{{ t.Home }}</span>
                 </a>
                 <a href="{% url 'banking:transactions' %}" class="nav-item {% if request.resolver_match.url_name == 'transactions' %}active{% endif %}">
                     <i class='bx bx-list-ul'></i>
-                    <span>Transactions</span>
+                    <span>{{ t.Transactions }}</span>
                 </a>
                 <a href="{% url 'banking:transfer' %}" class="nav-item {% if request.resolver_match.url_name == 'transfer' %}active{% endif %}">
                     <i class='bx bx-transfer-alt'></i>
-                    <span>Virement Externe</span>
+                    <span>{{ t.External_Transfer }}</span>
                 </a>
                 <a href="{% url 'banking:internal_transfer' %}" class="nav-item {% if request.resolver_match.url_name == 'internal_transfer' %}active{% endif %}">
                     <i class='bx bx-refresh'></i>
-                    <span>Virement Interne</span>
+                    <span>{{ t.Internal_Transfer }}</span>
                 </a>
                 <a href="{% url 'banking:beneficiaries' %}" class="nav-item {% if request.resolver_match.url_name == 'beneficiaries' %}active{% endif %}">
                     <i class='bx bx-user-plus'></i>
-                    <span>Bénéficiaires</span>
+                    <span>{{ t.Beneficiaries }}</span>
                 </a>
                 <a href="{% url 'banking:rib' %}" class="nav-item {% if request.resolver_match.url_name == 'rib' %}active{% endif %}">
                     <i class='bx bx-credit-card-front'></i>
-                    <span>RIB</span>
+                    <span>{{ t.RIB }}</span>
                 </a>
                 <a href="{% url 'banking:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                     <i class='bx bx-user'></i>
-                    <span>Profil</span>
+                    <span>{{ t.Profile }}</span>
                 </a>
                 <a href="{% url 'banking:settings' %}" class="nav-item {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
                     <i class='bx bx-cog'></i>
-                    <span>Paramètres</span>
+                    <span>{{ t.Settings }}</span>
                 </a>
             </nav>
             {% endif %}

@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:settings' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -148,7 +148,7 @@
 {% else %}
 <div class="no-notifications">
     <i class='bx bx-bell-off'></i>
-    <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Aucune notification</p>
+    <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">{{ t.No_notifications }}</p>
     <p style="font-size: 14px;">Vous n'avez pas de notifications pour le moment</p>
 </div>
 {% endif %}

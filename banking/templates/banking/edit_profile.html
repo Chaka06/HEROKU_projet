@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:settings' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -24,29 +24,29 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="page-title">Modifier le Profil</h1>
+<h1 class="page-title">{{ t.Edit_Profile }}</h1>
 <p class="page-subtitle">Mettez à jour vos informations personnelles</p>
 
 <form class="profile-form" method="post">
     {% csrf_token %}
     <div class="form-group">
-        <label class="form-label">Prénom</label>
+        <label class="form-label">{{ t.First_Name }}</label>
         <input type="text" name="first_name" class="form-input" value="{{ user.first_name }}" required>
     </div>
     <div class="form-group">
-        <label class="form-label">Nom</label>
+        <label class="form-label">{{ t.Last_Name }}</label>
         <input type="text" name="last_name" class="form-input" value="{{ user.last_name }}" required>
     </div>
     <div class="form-group">
-        <label class="form-label">Email</label>
+        <label class="form-label">{{ t.Email }}</label>
         <input type="email" name="email" class="form-input" value="{{ user.email }}" required>
     </div>
     <div class="form-group">
-        <label class="form-label">Téléphone</label>
+        <label class="form-label">{{ t.Phone }}</label>
         <input type="text" name="phone" class="form-input" value="{{ user.profile.phone|default:'' }}">
     </div>
     <div class="form-group">
-        <label class="form-label">Adresse</label>
+        <label class="form-label">{{ t.Address }}</label>
         <textarea name="address" class="form-input" rows="2">{{ user.profile.address|default:'' }}</textarea>
     </div>
     <button type="submit" class="submit-btn">Enregistrer les modifications</button>

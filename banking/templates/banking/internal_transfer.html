@@ -6,7 +6,7 @@
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -240,18 +240,18 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Virement Interne</h1>
-    <p class="page-subtitle">Transférer de l'argent entre vos comptes</p>
+    <h1 class="page-title">{{ t.Internal_Transfer }}</h1>
+    <p class="page-subtitle">{{ t.Transfer_between_your_accounts }}</p>
 </div>
 
 {% if user_accounts|length < 2 %}
 <div style="background: #fff3e0; border-left: 4px solid var(--warning); padding: 20px; border-radius: var(--radius-md); margin-bottom: 20px;">
     <p style="color: var(--warning); font-weight: 600; margin-bottom: 8px;">
         <i class='bx bx-info-circle' style="font-size: 20px; vertical-align: middle;"></i>
-        Virement interne non disponible
+        {{ t.Internal_transfer_unavailable }}
     </p>
     <p style="color: var(--text-gray); font-size: 14px;">
-        Vous devez avoir au moins 2 comptes (Courant et Épargne) pour effectuer des virements internes.
+        {{ t.Need_2_accounts_message }}
     </p>
 </div>
 {% else %}
@@ -261,7 +261,7 @@
     
     <!-- Compte source -->
     <div class="account-selection">
-        <label class="section-title">De (Compte à débiter)</label>
+        <label class="section-title">{{ t.From_debit_account }}</label>
         <div class="account-cards">
             {% for account in user_accounts %}
             <div class="account-card {% if forloop.first %}selected{% endif %}" onclick="selectFromAccount(this)" data-account-id="{{ account.id }}">
@@ -289,7 +289,7 @@
 
     <!-- Compte destination -->
     <div class="account-selection">
-        <label class="section-title">Vers (Compte à créditer)</label>
+        <label class="section-title">{{ t.To_credit_account }}</label>
         <div class="account-cards">
             {% for account in user_accounts %}
             <div class="account-card {% if forloop.last %}selected{% endif %}" onclick="selectToAccount(this)" data-account-id="{{ account.id }}">
@@ -313,7 +313,7 @@
 
     <!-- Montant -->
     <div class="form-group" style="margin-top: 24px;">
-        <label class="form-label" for="amount">Montant à transférer</label>
+        <label class="form-label" for="amount">{{ t.Amount_to_transfer }}</label>
         <div class="currency-symbol">
             <input type="number" id="amount" name="amount" class="form-input amount-input" placeholder="0,00" step="0.01" min="0.01" required>
         </div>
@@ -321,12 +321,12 @@
 
     <!-- Référence -->
     <div class="form-group">
-        <label class="form-label" for="reference">Référence (optionnel)</label>
-        <input type="text" id="reference" name="reference" class="form-input" placeholder="Ex: Épargne mensuelle">
+        <label class="form-label" for="reference">{{ t.Reference }} ({{ t.Optional }})</label>
+        <input type="text" id="reference" name="reference" class="form-input" placeholder="{{ t.Example_monthly_savings }}">
     </div>
 
     <button type="submit" class="submit-btn">
-        Effectuer le virement interne
+        {{ t.Make_internal_transfer }}
     </button>
 </form>
 

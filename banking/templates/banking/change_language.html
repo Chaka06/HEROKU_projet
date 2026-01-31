@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:settings' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -24,8 +24,8 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="page-title">Changer la Langue</h1>
-<p class="page-subtitle">Sélectionnez la langue de l'interface</p>
+<h1 class="page-title">{{ t.Change_Language }}</h1>
+<p class="page-subtitle">{{ t.Select_interface_language }}</p>
 
 <div class="language-list">
     <a href="?lang=fr" class="language-item {% if current_language == 'fr' %}active{% endif %}">

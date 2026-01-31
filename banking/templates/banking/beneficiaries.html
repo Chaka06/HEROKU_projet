@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:transfer' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -50,6 +50,7 @@
     .beneficiary-list {
         display: grid;
         gap: 12px;
+        padding: 0 2px; /* Éviter que les ombres soient coupées */
     }
 
     .beneficiary-card {
@@ -107,6 +108,9 @@
         font-weight: 600;
         margin-bottom: 4px;
         color: var(--text-dark);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .beneficiary-iban {
@@ -116,12 +120,16 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         font-family: 'Courier New', monospace;
+        word-break: break-all;
     }
 
     .beneficiary-email {
         font-size: 12px;
         color: var(--text-light);
         margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .beneficiary-arrow {
@@ -151,13 +159,13 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Mes Bénéficiaires</h1>
-    <p class="page-subtitle">Gérez vos bénéficiaires enregistrés</p>
+    <h1 class="page-title">{{ t.My_Beneficiaries }}</h1>
+    <p class="page-subtitle">{{ t.Manage_your_beneficiaries }}</p>
 </div>
 
 <a href="{% url 'banking:add_beneficiary' %}" class="add-beneficiary-btn">
     <i class='bx bx-plus'></i>
-    Ajouter un bénéficiaire
+    {{ t.Add_beneficiary }}
 </a>
 
 <div class="beneficiary-list">
@@ -177,7 +185,7 @@
     </a>
     {% empty %}
     <p style="color: var(--text-gray); text-align: center; padding: 40px;">
-        Aucun bénéficiaire enregistré
+        {{ t.No_beneficiaries_registered }}
     </p>
     {% endfor %}
 </div>

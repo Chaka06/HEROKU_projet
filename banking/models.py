@@ -220,7 +220,7 @@ class Beneficiary(models.Model):
     name = models.CharField(max_length=100)
     iban = models.CharField(max_length=34)
     bic = models.CharField(max_length=11, blank=True)
-    email = models.EmailField(blank=True)
+    email = models.EmailField(blank=False, help_text="Email pour recevoir les notifications de virement")
     is_favorite = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -313,4 +313,33 @@ class DocumentPDF(models.Model):
     class Meta:
         verbose_name = "Document PDF"
         verbose_name_plural = "Documents PDF"
+        ordering = ['-created_at']
+
+
+class OTPCode(models.Model):
+    """Code OTP pour authentification et validation"""
+    OTP_TYPES = [
+        ('LOGIN', 'Connexion'),
+        ('CHANGE_PASSWORD', 'Changement de mot de passe'),
+        ('EDIT_PROFILE', 'Modification du profil'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otp_codes')
+    code = models.CharField(max_length=5)
+    otp_type = models.CharField(max_length=20, choices=OTP_TYPES)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def is_valid(self):
+        """Vérifie si le code OTP est encore valide"""
+        from django.utils import timezone
+        return not self.is_used and timezone.now() < self.expires_at
+    
+    def __str__(self):
+        return f"OTP {self.code} - {self.user.username} - {self.get_otp_type_display()}"
+    
+    class Meta:
+        verbose_name = "Code OTP"
+        verbose_name_plural = "Codes OTP"
         ordering = ['-created_at']

@@ -99,28 +99,40 @@ class UserProfileInline(admin.StackedInline):
 class BankAccountInline(admin.TabularInline):
     model = BankAccount
     extra = 1
-    fields = ['bank', 'account_type', 'currency', 'balance', 'status', 'suspension_reason', 'unblock_fee']
+    fields = ['bank', 'account_type', 'currency', 'balance', 'account_number', 'iban', 'bic', 'status', 'suspension_reason', 'unblock_fee']
+    readonly_fields = ['account_number', 'iban', 'bic']
     
-    def save_model(self, request, obj, form, change):
-        # Générer automatiquement les infos bancaires si nouveau compte
-        if not obj.pk:
-            from .utils import generate_account_number, generate_iban, get_currency_for_country
-            obj.account_number = generate_account_number()
-            obj.iban = generate_iban(obj.user.profile.country if hasattr(obj.user, 'profile') else 'France')
-            obj.bic = obj.bank.swift_code if obj.bank.swift_code else 'BANKXXXXXX'
-            
-            # Créer une carte pour ce nouveau compte
-            Card.objects.create(
-                account=obj,
-                card_number=generate_card_number(),
-                card_holder_name=f"{obj.user.first_name.upper()} {obj.user.last_name.upper()}",
-                card_type='DEBIT',
-                card_network='MASTERCARD',
-                expiry_date='12/28',
-                cvv=str(random.randint(100, 999))
-            )
+    def save_formset(self, request, form, formset, change):
+        """Sauvegarder le formset et générer les infos bancaires pour les nouveaux comptes"""
+        instances = formset.save(commit=False)
         
-        super().save_model(request, obj, form, change)
+        for instance in instances:
+            if not instance.pk:  # Nouveau compte
+                from .utils import generate_account_number, generate_iban, get_currency_for_country
+                
+                # Générer les infos bancaires
+                instance.account_number = generate_account_number()
+                country = instance.user.profile.country if hasattr(instance.user, 'profile') else 'France'
+                instance.iban = generate_iban(country, instance.bank.swift_code if instance.bank else None)
+                instance.bic = instance.bank.swift_code if instance.bank and instance.bank.swift_code else 'BANKXXXXXX'
+                instance.save()
+                
+                # Créer une carte pour ce nouveau compte
+                Card.objects.create(
+                    account=instance,
+                    card_number=generate_card_number(),
+                    card_holder_name=f"{instance.user.first_name.upper()} {instance.user.last_name.upper()}",
+                    card_type='DEBIT',
+                    card_network='MASTERCARD',
+                    expiry_date='12/28',
+                    cvv=str(random.randint(100, 999))
+                )
+            else:
+                instance.save()
+        
+        # Supprimer les instances marquées pour suppression
+        for obj in formset.deleted_objects:
+            obj.delete()
 
 
 class BeneficiaryInline(admin.TabularInline):

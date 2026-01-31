@@ -6,7 +6,7 @@
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -246,26 +246,26 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Historique des Transactions</h1>
-    <p class="page-subtitle">Consultez toutes vos opérations bancaires</p>
+    <h1 class="page-title">{{ t.Transaction_History }}</h1>
+    <p class="page-subtitle">{{ t.View_all_banking_operations }}</p>
 </div>
 
 <!-- Statistiques -->
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-label">Total Transactions</div>
+        <div class="stat-label">{{ t.Total_Transactions }}</div>
         <div class="stat-value">{{ transactions|length }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Dépôts</div>
+        <div class="stat-label">{{ t.Deposits }}</div>
         <div class="stat-value positive">{{ deposits_count }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Retraits</div>
+        <div class="stat-label">{{ t.Withdrawals }}</div>
         <div class="stat-value negative">{{ withdrawals_count }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Solde Actuel</div>
+        <div class="stat-label">{{ t.Current_Balance }}</div>
         <div class="stat-value">{{ total_balance }}</div>
     </div>
 </div>
@@ -273,15 +273,15 @@
 <!-- Filtres -->
 <div class="filter-bar">
     <select class="filter-select" id="typeFilter">
-        <option value="">Tous les types</option>
-        <option value="deposit">Dépôts</option>
-        <option value="transfer">Virements</option>
-        <option value="payment">Paiements</option>
-        <option value="purchase">Achats</option>
+        <option value="">{{ t.All_types }}</option>
+        <option value="deposit">{{ t.Deposits }}</option>
+        <option value="transfer">{{ t.Transfers }}</option>
+        <option value="payment">{{ t.Payments }}</option>
+        <option value="purchase">{{ t.Purchases }}</option>
     </select>
     
     <select class="filter-select" id="accountFilter">
-        <option value="">Tous les comptes</option>
+        <option value="">{{ t.All_accounts }}</option>
         {% for account in user_accounts %}
         <option value="{{ account.id }}">{{ account.get_account_type_display }}</option>
         {% endfor %}
@@ -310,22 +310,22 @@
             {% endif %}
         </div>
         <div class="transaction-info">
-            <div class="transaction-title">{{ transaction.get_transaction_type_display }}</div>
-            <div class="transaction-subtitle">{{ transaction.description }}</div>
+            <div class="transaction-title">{{ transaction.get_transaction_type_display|translate_transaction_type:user_lang }}</div>
+            <div class="transaction-subtitle">{{ transaction.description|translate_text:user_lang }}</div>
             <div class="transaction-date">{{ transaction.created_at|date:"d/m/Y à H:i" }}</div>
         </div>
         <div class="transaction-amount-wrapper">
             <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">
                 {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}
             </div>
-            <div class="transaction-balance">Solde: {{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
+            <div class="transaction-balance">{{ t.Balance }}: {{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
         </div>
         <i class='bx bx-chevron-right transaction-arrow'></i>
     </a>
     {% endfor %}
     {% empty %}
     <p style="color: var(--text-gray); text-align: center; padding: 40px;">
-        Aucune transaction disponible
+        {{ t.No_transactions_available }}
     </p>
     {% endfor %}
 </div>

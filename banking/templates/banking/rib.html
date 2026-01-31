@@ -1,11 +1,11 @@
 {% extends 'banking/base.html' %}
 
-{% block title %}RIB - MaBanque{% endblock %}
+{% block title %}RIB - {{ bank_name|default:"Banque" }}{% endblock %}
 
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -28,9 +28,20 @@
         background: var(--white);
         border-radius: var(--radius-md);
         padding: 20px;
-        margin-bottom: 16px;
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border);
+        border: 2px solid var(--border);
+        position: relative;
+    }
+    
+    .rib-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-red), var(--primary-dark));
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
     }
 
     .rib-header {
@@ -52,16 +63,37 @@
         font-size: 36px;
         color: var(--primary-red);
     }
+    
+    .rib-logo img {
+        height: 32px;
+        width: auto;
+        object-fit: contain;
+    }
 
     .rib-logo-text h3 {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: var(--text-dark);
     }
 
     .rib-logo-text p {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--text-gray);
+    }
+    
+    /* Tailles responsives pour mobile */
+    @media (max-width: 767px) {
+        .rib-logo img {
+            height: 28px;
+        }
+        
+        .rib-logo-text h3 {
+            font-size: 14px;
+        }
+        
+        .rib-logo-text p {
+            font-size: 10px;
+        }
     }
 
     .account-badge {
@@ -181,37 +213,41 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Relevé d'Identité Bancaire</h1>
-    <p class="page-subtitle">Consultez et téléchargez votre RIB</p>
+    <h1 class="page-title">{{ t.Bank_Identity_Statement }}</h1>
+    <p class="page-subtitle">{{ t.View_and_download_your_RIB }} - {{ user_accounts.count }} {{ t.accounts }}</p>
 </div>
 
 {% for account in user_accounts %}
-<div class="rib-card">
+<div class="rib-card" style="{% if not forloop.first %}margin-top: 24px;{% endif %}">
     <div class="rib-header">
         <div class="rib-logo">
+            {% if bank_logo %}
+            <img src="{{ bank_logo }}" alt="{{ bank_name }}">
+            {% else %}
             <i class='bx bxs-bank'></i>
+            {% endif %}
             <div class="rib-logo-text">
-                <h3>MaBanque</h3>
-                <p>Banque en ligne</p>
+                <h3>{{ bank_name|default:"Banque" }}</h3>
+                <p>{{ account.bank.country|default:t.Online_bank }}</p>
             </div>
         </div>
         <div class="account-badge">{{ account.get_account_type_display }}</div>
     </div>
 
     <div class="rib-info-section">
-        <h4 class="rib-info-title">Informations du titulaire</h4>
+        <h4 class="rib-info-title">{{ t.Account_holder_information }}</h4>
         <div class="rib-info-item">
-            <span class="rib-info-label">Titulaire</span>
+            <span class="rib-info-label">{{ t.Account_holder }}</span>
             <span class="rib-info-value">{{ user.get_full_name|upper|default:user.username|upper }}</span>
         </div>
         <div class="rib-info-item">
-            <span class="rib-info-label">Adresse</span>
-            <span class="rib-info-value">{{ user.profile.address|default:"Non renseignée" }}</span>
+            <span class="rib-info-label">{{ t.Address }}</span>
+            <span class="rib-info-value">{{ user.profile.address|default:t.Not_provided }}</span>
         </div>
     </div>
 
     <div class="rib-info-section">
-        <h4 class="rib-info-title">Coordonnées bancaires</h4>
+        <h4 class="rib-info-title">{{ t.Bank_details }}</h4>
         <div class="rib-info-item">
             <span class="rib-info-label">IBAN</span>
             <span class="rib-info-value">{{ account.iban }}</span>
@@ -221,27 +257,27 @@
             <span class="rib-info-value">{{ account.bic }}</span>
         </div>
         <div class="rib-info-item">
-            <span class="rib-info-label">Numéro de compte</span>
+            <span class="rib-info-label">{{ t.Account_number }}</span>
             <span class="rib-info-value">{{ account.account_number }}</span>
         </div>
     </div>
 
     <div class="actions-buttons">
-        <button class="action-button primary" onclick="downloadRIB('{{ account.id }}')">
+        <a href="{% url 'banking:download_rib' account.id %}" class="action-button primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
             <i class='bx bx-download'></i>
-            Télécharger
-        </button>
+            {{ t.Download }}
+        </a>
         <button class="action-button" onclick="printRIB()">
             <i class='bx bx-printer'></i>
-            Imprimer
+            {{ t.Print }}
         </button>
         <button class="action-button" onclick="shareRIB('{{ account.iban }}')">
             <i class='bx bx-share-alt'></i>
-            Partager
+            {{ t.Share }}
         </button>
         <button class="action-button" onclick="copyIBAN('{{ account.iban }}')">
             <i class='bx bx-copy'></i>
-            Copier IBAN
+            {{ t.Copy_IBAN }}
         </button>
     </div>
 </div>
@@ -262,7 +298,7 @@
     function shareRIB(iban) {
         if (navigator.share) {
             navigator.share({
-                title: 'Mon RIB - MaBanque',
+                title: 'Mon RIB - {{ bank_name|default:"Banque" }}',
                 text: `IBAN: ${iban}`,
             });
         } else {

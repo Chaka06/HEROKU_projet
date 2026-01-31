@@ -6,7 +6,7 @@
 {% block header_action %}
 <a href="{% url 'banking:transactions' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -194,7 +194,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Détails de la Transaction</h1>
+    <h1 class="page-title">{{ t.Transaction_Details }}</h1>
     <p class="page-subtitle">Bordereau de transaction #{{ transaction.id }}</p>
 </div>
 
@@ -236,13 +236,13 @@
     </div>
     
     <div class="detail-row">
-        <span class="detail-label">Description</span>
+        <span class="detail-label">{{ t.Description }}</span>
         <span class="detail-value">{{ transaction.description }}</span>
     </div>
     
     {% if transaction.reference %}
     <div class="detail-row">
-        <span class="detail-label">Référence</span>
+        <span class="detail-label">{{ t.Reference }}</span>
         <span class="detail-value">{{ transaction.reference }}</span>
     </div>
     {% endif %}
@@ -254,7 +254,7 @@
     
     {% if transaction.recipient %}
     <div class="detail-row">
-        <span class="detail-label">Bénéficiaire</span>
+        <span class="detail-label">{{ t.Beneficiary }}</span>
         <span class="detail-value">{{ transaction.recipient }}</span>
     </div>
     {% endif %}

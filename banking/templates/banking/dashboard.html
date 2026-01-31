@@ -1,7 +1,7 @@
 {% extends 'banking/base.html' %}
 {% load banking_tags %}
 
-{% block title %}Tableau de Bord - MaBanque{% endblock %}
+{% block title %}Tableau de Bord - {{ bank_name|default:"Banque" }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -476,6 +476,7 @@
     /* Transactions */
     .transactions-section {
         margin-top: 8px;
+        padding: 0 2px; /* Éviter que les ombres soient coupées */
     }
 
     .section-date {
@@ -549,6 +550,7 @@
     .transaction-info {
         flex: 1;
         min-width: 0;
+        overflow: hidden;
     }
 
     .transaction-title {
@@ -556,6 +558,9 @@
         font-weight: 600;
         margin-bottom: 4px;
         color: var(--text-dark);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .transaction-subtitle {
@@ -738,7 +743,7 @@
 <div class="virtual-card mobile-card">
     <!-- En-tête avec type de compte et date -->
     <div class="card-header">
-        <div class="card-type">{{ primary_account.get_account_type_display|upper }}</div>
+        <div class="card-type">{{ primary_account.get_account_type_display|translate_account_type:user_lang|upper }}</div>
         <div class="card-date">{% now "d/m/Y" %}</div>
     </div>
     
@@ -801,31 +806,58 @@
 </div>
 {% endif %}
 
+<!-- Statistiques rapides -->
+<div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 16px; color: white;">
+        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">Solde total</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ total_balance|floatformat:2 }} €</div>
+        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ active_accounts }} compte{{ active_accounts|pluralize }}</div>
+    </div>
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; padding: 16px; color: white;">
+        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">Dépenses 7j</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|floatformat:2 }} €</div>
+        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ stats_by_type.transfers|add:stats_by_type.payments|add:stats_by_type.purchases }} transactions</div>
+    </div>
+</div>
+
+<!-- Graphique activité (7 derniers jours) -->
+<div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e0e0e0;">
+    <div style="font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px;">Activité des 7 derniers jours</div>
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 80px; gap: 4px;">
+        {% for stat in daily_stats %}
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 100%; background: linear-gradient(to top, var(--primary-red), var(--primary-dark)); border-radius: 4px 4px 0 0; height: {{ stat.count|default:1 }}%; min-height: 4px;"></div>
+            <div style="font-size: 9px; color: #999;">{{ stat.date }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
 <!-- Cartes d'Action -->
 <div class="actions-grid">
     <a href="{% url 'banking:transfer' %}" class="action-card">
         <div class="action-icon transfer">
             <i class='bx bx-transfer-alt'></i>
         </div>
-        <div class="action-label">Virement</div>
+        <div class="action-label">{{ t.Transfer }}</div>
     </a>
     <a href="{% url 'banking:internal_transfer' %}" class="action-card">
         <div class="action-icon send">
             <i class='bx bx-refresh'></i>
         </div>
-        <div class="action-label">Entre Comptes</div>
+        <div class="action-label">{{ t.Between_Accounts }}</div>
     </a>
     <a href="{% url 'banking:rib' %}" class="action-card">
         <div class="action-icon more">
             <i class='bx bx-credit-card-front'></i>
         </div>
-        <div class="action-label">RIB</div>
+        <div class="action-label">{{ t.RIB }}</div>
     </a>
     <a href="{% url 'banking:settings' %}" class="action-card">
         <div class="action-icon manage">
             <i class='bx bx-cog'></i>
         </div>
-        <div class="action-label">Paramètres</div>
+        <div class="action-label">{{ t.Settings }}</div>
     </a>
 </div>
 
@@ -843,7 +875,7 @@
                 {% endif %}
             </div>
             <div class="account-display-info">
-                <div class="account-display-type">{{ account.get_account_type_display }}</div>
+                <div class="account-display-type">{{ account.get_account_type_display|translate_account_type:user_lang }}</div>
                 <div class="account-display-number">{{ account.get_masked_number }}</div>
                 <div class="account-display-balance">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</div>
             </div>
@@ -864,10 +896,10 @@
                 <span style="background: #264653;"></span>
             </div>
         </div>
-        <div class="rewards-text">Historique des transactions</div>
+        <div class="rewards-text">{{ t.Transaction_History }}</div>
     </div>
     <div class="rewards-right">
-        {{ transactions|length }} transactions
+        {{ transactions|length }} {{ t.transactions }}
         <i class='bx bx-chevron-right'></i>
     </div>
 </a>
@@ -877,7 +909,7 @@
     <div class="search-box">
         <div class="search-input-wrapper">
             <i class='bx bx-search search-icon'></i>
-            <input type="text" class="search-input" placeholder="Rechercher des transactions" id="searchInput">
+            <input type="text" class="search-input" placeholder="{{ t.Search_transactions }}" id="searchInput">
         </div>
         <button class="filter-btn">
             <i class='bx bx-slider-alt'></i>
@@ -912,8 +944,8 @@
                 {% endif %}
             </div>
             <div class="transaction-info">
-                <div class="transaction-title">{{ transaction.get_transaction_type_display }}</div>
-                <div class="transaction-subtitle">{{ transaction.description }}</div>
+                <div class="transaction-title">{{ transaction.get_transaction_type_display|translate_transaction_type:user_lang }}</div>
+                <div class="transaction-subtitle">{{ transaction.description|translate_text:user_lang }}</div>
             </div>
             <div class="transaction-amount-wrapper">
                 <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">

@@ -9,7 +9,7 @@ from .models import BankAccount, Transaction, Beneficiary, Notification, Support
 
 
 def login_view(request):
-    """Vue de connexion"""
+    """Vue de connexion avec OTP"""
     if request.user.is_authenticated:
         return redirect('banking:dashboard')
     
@@ -20,19 +20,97 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            login(request, user)
-            return redirect('banking:dashboard')
+            # Créer et envoyer le code OTP
+            from .email_service import create_otp, send_otp_email
+            otp = create_otp(user, 'LOGIN')
+            
+            try:
+                send_otp_email(user, otp.code, 'LOGIN')
+                # Stocker l'ID utilisateur en session
+                request.session['otp_user_id'] = user.id
+                request.session['otp_type'] = 'LOGIN'
+                messages.success(request, f'Un code de vérification a été envoyé à {user.email}')
+                return redirect('banking:verify_otp')
+            except Exception as e:
+                messages.error(request, f'Erreur lors de l\'envoi du code: {str(e)}')
         else:
             messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
     
     return render(request, 'banking/login.html')
 
 
+def verify_otp_view(request):
+    """Vue de vérification du code OTP"""
+    user_id = request.session.get('otp_user_id')
+    otp_type = request.session.get('otp_type', 'LOGIN')
+    
+    if not user_id:
+        return redirect('banking:login')
+    
+    from django.contrib.auth.models import User
+    user = User.objects.get(id=user_id)
+    
+    # Récupérer les infos de la banque pour le thème
+    account = user.bank_accounts.first()
+    bank_primary_color = account.bank.primary_color if account and account.bank else '#009464'
+    bank_secondary_color = account.bank.secondary_color if account and account.bank else '#007850'
+    bank_name = account.bank.name if account and account.bank else 'Banque'
+    
+    # Renvoyer le code si demandé
+    if request.GET.get('resend') == '1':
+        from .email_service import create_otp, send_otp_email
+        otp = create_otp(user, otp_type)
+        send_otp_email(user, otp.code, otp_type)
+        messages.success(request, 'Un nouveau code a été envoyé')
+    
+    if request.method == 'POST':
+        # Récupérer le code OTP
+        code = ''.join([
+            request.POST.get('otp1', ''),
+            request.POST.get('otp2', ''),
+            request.POST.get('otp3', ''),
+            request.POST.get('otp4', ''),
+            request.POST.get('otp5', '')
+        ])
+        
+        from .email_service import verify_otp
+        if verify_otp(user, code, otp_type):
+            if otp_type == 'LOGIN':
+                login(request, user)
+                del request.session['otp_user_id']
+                del request.session['otp_type']
+                messages.success(request, 'Connexion réussie!')
+                return redirect('banking:dashboard')
+            elif otp_type == 'CHANGE_PASSWORD':
+                # Rediriger vers le formulaire de changement de MDP
+                return redirect('banking:change_password_confirm')
+            elif otp_type == 'EDIT_PROFILE':
+                # Rediriger vers le formulaire d'édition
+                return redirect('banking:edit_profile_confirm')
+        else:
+            context = {
+                'error': 'Code incorrect ou expiré',
+                'user': user,
+                'bank_primary_color': bank_primary_color,
+                'bank_secondary_color': bank_secondary_color,
+                'bank_name': bank_name,
+            }
+            return render(request, 'banking/otp_verification.html', context)
+    
+    context = {
+        'user': user,
+        'bank_primary_color': bank_primary_color,
+        'bank_secondary_color': bank_secondary_color,
+        'bank_name': bank_name,
+    }
+    return render(request, 'banking/otp_verification.html', context)
+
+
 
 
 @login_required
 def dashboard_view(request):
-    """Vue du tableau de bord"""
+    """Vue du tableau de bord avec statistiques"""
     # Récupérer le compte principal et la carte
     primary_account = request.user.bank_accounts.filter(account_type='CHECKING').first()
     primary_card = primary_account.cards.first() if primary_account else None
@@ -42,10 +120,63 @@ def dashboard_view(request):
         account__user=request.user
     ).order_by('-created_at')[:20]
     
+    # === STATISTIQUES ===
+    from django.db.models import Sum, Count
+    from datetime import datetime, timedelta
+    
+    # Toutes les transactions de l'utilisateur
+    all_transactions = Transaction.objects.filter(account__user=request.user)
+    
+    # Total des dépenses (7 derniers jours)
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    expenses_7d = all_transactions.filter(
+        created_at__gte=seven_days_ago,
+        transaction_type__in=['TRANSFER', 'PAYMENT', 'PURCHASE', 'ONLINE_PURCHASE']
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Total des revenus (7 derniers jours)
+    income_7d = all_transactions.filter(
+        created_at__gte=seven_days_ago,
+        transaction_type='DEPOSIT'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Transactions par type
+    stats_by_type = {
+        'deposits': all_transactions.filter(transaction_type='DEPOSIT').count(),
+        'transfers': all_transactions.filter(transaction_type='TRANSFER').count(),
+        'payments': all_transactions.filter(transaction_type='PAYMENT').count(),
+        'purchases': all_transactions.filter(transaction_type__in=['PURCHASE', 'ONLINE_PURCHASE']).count(),
+    }
+    
+    # Solde total tous comptes
+    total_balance = sum(acc.balance for acc in request.user.bank_accounts.all())
+    
+    # Nombre de comptes actifs
+    active_accounts = request.user.bank_accounts.filter(status='ACTIVE').count()
+    
+    # Transactions par jour (7 derniers jours)
+    daily_stats = []
+    for i in range(6, -1, -1):
+        day = datetime.now() - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        count = all_transactions.filter(created_at__range=[day_start, day_end]).count()
+        daily_stats.append({
+            'date': day.strftime('%d/%m'),
+            'count': count
+        })
+    
     context = {
         'primary_account': primary_account,
         'primary_card': primary_card,
         'transactions': transactions,
+        'total_balance': total_balance,
+        'active_accounts': active_accounts,
+        'expenses_7d': expenses_7d,
+        'income_7d': income_7d,
+        'stats_by_type': stats_by_type,
+        'daily_stats': daily_stats,
     }
     
     return render(request, 'banking/dashboard.html', context)
@@ -118,7 +249,24 @@ def support_chat_view(request):
 
 @login_required
 def edit_profile_view(request):
-    """Vue pour modifier le profil"""
+    """Vue édition profil - Demande OTP"""
+    from .email_service import create_otp, send_otp_email
+    otp = create_otp(request.user, 'EDIT_PROFILE')
+    
+    try:
+        send_otp_email(request.user, otp.code, 'EDIT_PROFILE')
+        request.session['otp_user_id'] = request.user.id
+        request.session['otp_type'] = 'EDIT_PROFILE'
+        messages.info(request, f'Code envoyé à {request.user.email}')
+        return redirect('banking:verify_otp')
+    except Exception as e:
+        messages.error(request, f'Erreur: {str(e)}')
+        return redirect('banking:settings')
+
+
+@login_required
+def edit_profile_confirm_view(request):
+    """Formulaire après OTP"""
     if request.method == 'POST':
         request.user.first_name = request.POST.get('first_name')
         request.user.last_name = request.POST.get('last_name')
@@ -128,17 +276,36 @@ def edit_profile_view(request):
         if hasattr(request.user, 'profile'):
             request.user.profile.phone = request.POST.get('phone', '')
             request.user.profile.address = request.POST.get('address', '')
+            request.user.profile.city = request.POST.get('city', '')
+            request.user.profile.country = request.POST.get('country', '')
             request.user.profile.save()
         
-        messages.success(request, 'Profil mis à jour avec succès!')
-        return redirect('banking:settings')
+        messages.success(request, 'Profil mis à jour!')
+        return redirect('banking:profile')
     
     return render(request, 'banking/edit_profile.html')
 
 
 @login_required
 def change_password_view(request):
-    """Vue pour changer le mot de passe"""
+    """Vue de changement de mot de passe - Demande OTP"""
+    from .email_service import create_otp, send_otp_email
+    otp = create_otp(request.user, 'CHANGE_PASSWORD')
+    
+    try:
+        send_otp_email(request.user, otp.code, 'CHANGE_PASSWORD')
+        request.session['otp_user_id'] = request.user.id
+        request.session['otp_type'] = 'CHANGE_PASSWORD'
+        messages.info(request, f'Code envoyé à {request.user.email}')
+        return redirect('banking:verify_otp')
+    except Exception as e:
+        messages.error(request, f'Erreur: {str(e)}')
+        return redirect('banking:settings')
+
+
+@login_required
+def change_password_confirm_view(request):
+    """Formulaire après OTP"""
     if request.method == 'POST':
         old_password = request.POST.get('old_password')
         new_password1 = request.POST.get('new_password1')
@@ -147,12 +314,12 @@ def change_password_view(request):
         if not request.user.check_password(old_password):
             messages.error(request, 'Mot de passe actuel incorrect.')
         elif new_password1 != new_password2:
-            messages.error(request, 'Les nouveaux mots de passe ne correspondent pas.')
+            messages.error(request, 'Les mots de passe ne correspondent pas.')
         else:
             request.user.set_password(new_password1)
             request.user.save()
             update_session_auth_hash(request, request.user)
-            messages.success(request, 'Mot de passe modifié avec succès!')
+            messages.success(request, 'Mot de passe modifié!')
             return redirect('banking:settings')
     
     return render(request, 'banking/change_password.html')
@@ -161,12 +328,24 @@ def change_password_view(request):
 @login_required
 def change_language_view(request):
     """Vue pour changer la langue"""
+    from django.utils import translation
+    from django.conf import settings
+    from .translations import translate as _t
+    
     lang = request.GET.get('lang')
     
     if lang and hasattr(request.user, 'profile'):
+        # Sauvegarder dans le profil
         request.user.profile.language = lang
         request.user.profile.save()
-        messages.success(request, 'Langue modifiée avec succès!')
+        
+        # Activer la langue immédiatement
+        translation.activate(lang)
+        request.session['django_language'] = lang
+        
+        # Message traduit
+        success_msg = _t('Language changed successfully', lang)
+        messages.success(request, success_msg)
         return redirect('banking:settings')
     
     current_lang = request.user.profile.language if hasattr(request.user, 'profile') else 'fr'
@@ -202,6 +381,7 @@ def transfer_view(request):
         from_account_id = request.POST.get('from_account')
         beneficiary_name = request.POST.get('beneficiary')
         iban = request.POST.get('iban')
+        beneficiary_email = request.POST.get('beneficiary_email', '')
         amount = Decimal(request.POST.get('amount', 0))
         reference = request.POST.get('reference', '')
         
@@ -219,7 +399,7 @@ def transfer_view(request):
                     from_account.save()
                     
                     # Créer la transaction
-                    Transaction.objects.create(
+                    trans = Transaction.objects.create(
                         account=from_account,
                         transaction_type='TRANSFER',
                         amount=amount,
@@ -227,10 +407,26 @@ def transfer_view(request):
                         description=f'Virement vers {beneficiary_name}',
                         reference=reference,
                         recipient=beneficiary_name,
-                        recipient_iban=iban
+                        recipient_iban=iban,
+                        status='PENDING'
                     )
                     
-                    messages.success(request, f'Virement de {amount}€ effectué avec succès vers {beneficiary_name}.')
+                    # ENVOYER EMAIL AU TITULAIRE
+                    try:
+                        from .email_service import send_transaction_email_to_sender
+                        send_transaction_email_to_sender(trans)
+                    except Exception as e:
+                        print(f"Erreur envoi email titulaire: {e}")
+                    
+                    # ENVOYER EMAIL AU BÉNÉFICIAIRE (si email fourni)
+                    if beneficiary_email:
+                        try:
+                            from .email_service import send_transaction_email_to_beneficiary
+                            send_transaction_email_to_beneficiary(trans, beneficiary_email, beneficiary_name)
+                        except Exception as e:
+                            print(f"Erreur envoi email bénéficiaire: {e}")
+                    
+                    messages.success(request, f'Virement de {amount}€ effectué avec succès vers {beneficiary_name}. Un email de confirmation vous a été envoyé.')
                     return redirect('banking:dashboard')
                     
         except BankAccount.DoesNotExist:
@@ -289,6 +485,24 @@ def rib_view(request):
     }
     
     return render(request, 'banking/rib.html', context)
+
+
+@login_required
+def download_rib_pdf(request, account_id):
+    """Télécharge le RIB en PDF"""
+    account = get_object_or_404(
+        BankAccount,
+        id=account_id,
+        user=request.user
+    )
+    
+    from .pdf_generator import generate_rib_pdf
+    pdf_content = generate_rib_pdf(account)
+    
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="RIB_{account.account_type}_{account.account_number}.pdf"'
+    
+    return response
 
 
 @login_required
@@ -456,7 +670,14 @@ def confirm_transaction_view(request, transaction_id):
     transaction.confirmed_at = timezone.now()
     transaction.save()
     
-    messages.success(request, 'Transaction confirmée avec succès!')
+    # ENVOYER EMAIL DE CONFIRMATION
+    try:
+        from .email_service import send_transaction_confirmation_email
+        send_transaction_confirmation_email(transaction)
+    except Exception as e:
+        print(f"Erreur envoi email confirmation: {e}")
+    
+    messages.success(request, 'Transaction confirmée avec succès! Un email de confirmation vous a été envoyé.')
     return redirect('banking:transaction_detail', transaction_id=transaction_id)
 
 
@@ -505,7 +726,14 @@ def reject_transaction_view(request, transaction_id):
                 message=f'Votre transaction de {transaction.amount} a été rejetée. Motif: {rejection_reason}'
             )
             
-            messages.success(request, 'Transaction rejetée. Le montant a été remboursé sur votre compte.')
+            # ENVOYER EMAIL DE REJET
+            try:
+                from .email_service import send_transaction_rejection_email
+                send_transaction_rejection_email(transaction)
+            except Exception as e:
+                print(f"Erreur envoi email rejet: {e}")
+            
+            messages.success(request, 'Transaction rejetée. Le montant a été remboursé sur votre compte. Un email vous a été envoyé.')
             return redirect('banking:transaction_detail', transaction_id=transaction_id)
     
     context = {

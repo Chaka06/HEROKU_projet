@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -261,8 +261,8 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Paramètres</h1>
-    <p class="page-subtitle">Gérez votre compte et vos préférences</p>
+    <h1 class="page-title">{{ t.Settings }}</h1>
+    <p class="page-subtitle">{{ t.Manage_your_account_and_preferences }}</p>
 </div>
 
 <!-- Profil utilisateur -->
@@ -272,20 +272,20 @@
         <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
         <div class="user-email">{{ user.email }}</div>
     </div>
-    <a href="{% url 'banking:edit_profile' %}" class="edit-profile-btn">Modifier</a>
+    <a href="{% url 'banking:edit_profile' %}" class="edit-profile-btn">{{ t.Edit }}</a>
 </div>
 
 <!-- Section Compte -->
 <div class="settings-section">
-    <h2 class="section-title">Compte</h2>
+    <h2 class="section-title">{{ t.Account }}</h2>
     <div class="settings-group">
         <a href="{% url 'banking:edit_profile' %}" class="setting-item">
             <div class="setting-icon profile">
                 <i class='bx bx-user'></i>
             </div>
             <div class="setting-content">
-                <div class="setting-title">Informations personnelles</div>
-                <div class="setting-description">Nom, prénom, email, téléphone</div>
+                <div class="setting-title">{{ t.Personal_information }}</div>
+                <div class="setting-description">{{ t.Name_first_name_email_phone }}</div>
             </div>
             <div class="setting-action">
                 <i class='bx bx-chevron-right setting-arrow'></i>
@@ -297,8 +297,8 @@
                 <i class='bx bx-lock-alt'></i>
             </div>
             <div class="setting-content">
-                <div class="setting-title">Sécurité et connexion</div>
-                <div class="setting-description">Modifier le mot de passe</div>
+                <div class="setting-title">{{ t.Security_and_connection }}</div>
+                <div class="setting-description">{{ t.Change_password }}</div>
             </div>
             <div class="setting-action">
                 <i class='bx bx-chevron-right setting-arrow'></i>
@@ -309,15 +309,15 @@
 
 <!-- Section Préférences -->
 <div class="settings-section">
-    <h2 class="section-title">Préférences</h2>
+    <h2 class="section-title">{{ t.Preferences }}</h2>
     <div class="settings-group">
         <a href="{% url 'banking:notifications' %}" class="setting-item">
             <div class="setting-icon notification">
                 <i class='bx bx-bell'></i>
             </div>
             <div class="setting-content">
-                <div class="setting-title">Notifications</div>
-                <div class="setting-description">Gérer vos notifications</div>
+                <div class="setting-title">{{ t.Notifications }}</div>
+                <div class="setting-description">{{ t.Manage_your_notifications }}</div>
             </div>
             <div class="setting-action">
                 {% if unread_notifications_count > 0 %}
@@ -332,8 +332,8 @@
                 <i class='bx bx-globe'></i>
             </div>
             <div class="setting-content">
-                <div class="setting-title">Langue</div>
-                <div class="setting-description">Choisir la langue de l'application</div>
+                <div class="setting-title">{{ t.Language }}</div>
+                <div class="setting-description">{{ t.Choose_application_language }}</div>
             </div>
             <div class="setting-action">
                 <span class="setting-value">{{ current_language }}</span>
@@ -345,15 +345,15 @@
 
 <!-- Section Support -->
 <div class="settings-section">
-    <h2 class="section-title">Support</h2>
+    <h2 class="section-title">{{ t.Support }}</h2>
     <div class="settings-group">
         <a href="{% url 'banking:support_chat' %}" class="setting-item">
             <div class="setting-icon help">
                 <i class='bx bx-chat'></i>
             </div>
             <div class="setting-content">
-                <div class="setting-title">Contacter le support</div>
-                <div class="setting-description">Chat avec le support bancaire</div>
+                <div class="setting-title">{{ t.Contact_support }}</div>
+                <div class="setting-description">{{ t.Chat_with_bank_support }}</div>
             </div>
             <div class="setting-action">
                 {% if unread_messages_count > 0 %}
@@ -375,8 +375,8 @@
                     <i class='bx bx-log-out'></i>
                 </div>
                 <div class="setting-content">
-                    <div class="setting-title" style="color: #c62828;">Se déconnecter</div>
-                    <div class="setting-description">Quitter votre session</div>
+                    <div class="setting-title" style="color: #c62828;">{{ t.Disconnect }}</div>
+                    <div class="setting-description">{{ t.Logout_from_your_session }}</div>
                 </div>
                 <div class="setting-action">
                     <i class='bx bx-chevron-right setting-arrow'></i>

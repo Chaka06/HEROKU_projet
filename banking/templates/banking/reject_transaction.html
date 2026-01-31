@@ -6,7 +6,7 @@
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -146,7 +146,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Rejeter la Transaction</h1>
+    <h1 class="page-title">{{ t.Reject_Transaction }}</h1>
     <p class="page-subtitle">Annuler et rembourser cette transaction</p>
 </div>
 
@@ -163,15 +163,15 @@
 
 <div class="transaction-summary">
     <div class="summary-row">
-        <span class="summary-label">Montant</span>
+        <span class="summary-label">{{ t.Amount }}</span>
         <span class="summary-value">{{ transaction.amount }} {{ transaction.account.currency|currency_symbol }}</span>
     </div>
     <div class="summary-row">
-        <span class="summary-label">Description</span>
+        <span class="summary-label">{{ t.Description }}</span>
         <span class="summary-value">{{ transaction.description }}</span>
     </div>
     <div class="summary-row">
-        <span class="summary-label">Date</span>
+        <span class="summary-label">{{ t.Date }}</span>
         <span class="summary-value">{{ transaction.created_at|date:"d/m/Y à H:i" }}</span>
     </div>
 </div>

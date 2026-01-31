@@ -7,7 +7,7 @@ def bank_theme(request):
         'bank_background_color': '#f8f9fa',
         'bank_text_color': '#ffffff',
         'bank_text_dark': '#1a1a1a',
-        'bank_name': 'MaBanque',
+        'bank_name': 'Banque',
         'bank_logo': None,
     }
     
@@ -27,3 +27,30 @@ def bank_theme(request):
                 context['bank_logo'] = account.bank.logo.url
     
     return context
+
+
+def user_language(request):
+    """
+    Context processor pour ajouter la langue de l'utilisateur et les traductions
+    """
+    from .translations import translate, TRANSLATIONS
+    
+    # Déterminer la langue de l'utilisateur
+    lang = 'fr'  # Par défaut
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        lang = request.user.profile.language or 'fr'
+    
+    # Créer un dictionnaire de traductions accessible via t.key
+    class TranslationDict:
+        def __init__(self, lang):
+            self.lang = lang
+        
+        def __getattr__(self, key):
+            # Remplacer les underscores par des espaces
+            actual_key = key.replace('_', ' ')
+            return translate(actual_key, self.lang)
+    
+    return {
+        'user_lang': lang,
+        't': TranslationDict(lang),
+    }

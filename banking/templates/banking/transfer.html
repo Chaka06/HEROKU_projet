@@ -1,11 +1,11 @@
 {% extends 'banking/base.html' %}
 
-{% block title %}Virement Bancaire - MaBanque{% endblock %}
+{% block title %}Virement Bancaire - {{ bank_name|default:"Banque" }}{% endblock %}
 
 {% block header_action %}
 <a href="{% url 'banking:dashboard' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -444,8 +444,8 @@
 {% block content %}
 <!-- Titre de la page -->
 <div class="page-header">
-    <h1 class="page-title">Virement Bancaire</h1>
-    <p class="page-subtitle">Effectuez un virement vers un bénéficiaire</p>
+    <h1 class="page-title">{{ t.Bank_Transfer }}</h1>
+    <p class="page-subtitle">{{ t.Transfer_money_to_a_beneficiary }}</p>
 </div>
 
 <!-- Boutons d'action principaux -->
@@ -456,8 +456,8 @@
             <i class='bx bx-refresh'></i>
         </div>
         <div class="action-btn-content">
-            <div class="action-btn-title">Virement Interne</div>
-            <div class="action-btn-description">Entre vos comptes Courant et Épargne</div>
+            <div class="action-btn-title">{{ t.Internal_Transfer }}</div>
+            <div class="action-btn-description">{{ t.Between_Checking_and_Savings }}</div>
         </div>
         <i class='bx bx-chevron-right action-btn-arrow'></i>
     </a>
@@ -468,8 +468,8 @@
             <i class='bx bx-user-plus'></i>
         </div>
         <div class="action-btn-content">
-            <div class="action-btn-title">Enregistrer un bénéficiaire</div>
-            <div class="action-btn-description">Ajouter un nouveau bénéficiaire</div>
+            <div class="action-btn-title">{{ t.Register_beneficiary }}</div>
+            <div class="action-btn-description">{{ t.Add_a_new_beneficiary }}</div>
         </div>
         <i class='bx bx-chevron-right action-btn-arrow'></i>
     </a>
@@ -479,8 +479,8 @@
             <i class='bx bx-list-ul'></i>
         </div>
         <div class="action-btn-content">
-            <div class="action-btn-title">Choisir un bénéficiaire</div>
-            <div class="action-btn-description">Sélectionner dans vos contacts</div>
+            <div class="action-btn-title">{{ t.Choose_beneficiary }}</div>
+            <div class="action-btn-description">{{ t.Select_from_contacts }}</div>
         </div>
         <i class='bx bx-chevron-right action-btn-arrow'></i>
     </a>
@@ -489,12 +489,12 @@
 <!-- Section Virement Rapide -->
 <div class="quick-transfer-section">
     <div class="section-header">
-        <h2 class="section-title">Virement Rapide</h2>
+        <h2 class="section-title">{{ t.Quick_Transfer }}</h2>
     </div>
 
     <!-- Sélection du compte à débiter -->
     <div class="account-selection">
-        <label class="form-label">Compte à débiter</label>
+        <label class="form-label">{{ t.Debit_account }}</label>
         <div class="account-cards">
             {% for account in user_accounts %}
             <div class="account-card {% if forloop.first %}selected{% endif %}" onclick="selectAccount(this)" data-account-id="{{ account.id }}">
@@ -522,29 +522,34 @@
         <input type="hidden" name="from_account" id="fromAccount" value="{{ user_accounts.0.id }}">
         
         <div class="form-group">
-            <label class="form-label" for="beneficiary">Bénéficiaire</label>
-            <input type="text" id="beneficiary" name="beneficiary" class="form-input" placeholder="Nom du bénéficiaire" value="{{ selected_beneficiary.name|default:'' }}" required>
+            <label class="form-label" for="beneficiary">{{ t.Beneficiary }}</label>
+            <input type="text" id="beneficiary" name="beneficiary" class="form-input" placeholder="{{ t.Beneficiary_name }}" value="{{ selected_beneficiary.name|default:'' }}" required>
         </div>
 
         <div class="form-group">
             <label class="form-label" for="iban">IBAN</label>
             <input type="text" id="iban" name="iban" class="form-input" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" value="{{ selected_beneficiary.iban|default:'' }}" required>
         </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="beneficiary_email">{{ t.Email }} {{ t.Beneficiary }}</label>
+            <input type="email" id="beneficiary_email" name="beneficiary_email" class="form-input" placeholder="{{ t.Example_email }}" value="{{ selected_beneficiary.email|default:'' }}" required>
+        </div>
 
         <div class="form-group">
-            <label class="form-label" for="amount">Montant</label>
+            <label class="form-label" for="amount">{{ t.Amount }}</label>
             <div class="currency-symbol">
                 <input type="number" id="amount" name="amount" class="form-input amount-input" placeholder="0,00" step="0.01" min="0" required>
             </div>
         </div>
 
         <div class="form-group">
-            <label class="form-label" for="reference">Référence (optionnel)</label>
-            <input type="text" id="reference" name="reference" class="form-input" placeholder="Motif du virement">
+            <label class="form-label" for="reference">{{ t.Reference }} ({{ t.Optional }})</label>
+            <input type="text" id="reference" name="reference" class="form-input" placeholder="{{ t.Transfer_reason }}">
         </div>
 
         <button type="submit" class="submit-btn">
-            Effectuer le virement
+            {{ t.Make_transfer }}
         </button>
     </form>
 </div>
@@ -552,9 +557,9 @@
 <!-- Bénéficiaires récents -->
 <div class="recent-beneficiaries">
     <div class="section-header">
-        <h2 class="section-title">Bénéficiaires récents</h2>
+        <h2 class="section-title">{{ t.Recent_beneficiaries }}</h2>
         <a href="#" class="see-all">
-            Voir tout
+            {{ t.See_all }}
             <i class='bx bx-chevron-right'></i>
         </a>
     </div>

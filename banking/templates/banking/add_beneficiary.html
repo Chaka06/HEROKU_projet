@@ -5,7 +5,7 @@
 {% block header_action %}
 <a href="{% url 'banking:transfer' %}" class="back-btn">
     <i class='bx bx-arrow-back'></i>
-    <span>Retour</span>
+    <span>{{ t.Back }}</span>
 </a>
 {% endblock %}
 
@@ -94,35 +94,35 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Ajouter un Bénéficiaire</h1>
-    <p class="page-subtitle">Enregistrez un nouveau bénéficiaire pour vos virements</p>
+    <h1 class="page-title">{{ t.Add_beneficiary }}</h1>
+    <p class="page-subtitle">{{ t.Register_new_beneficiary_for_transfers }}</p>
 </div>
 
 <form class="beneficiary-form" method="post">
     {% csrf_token %}
     
     <div class="form-group">
-        <label class="form-label" for="name">Nom du bénéficiaire</label>
-        <input type="text" id="name" name="name" class="form-input" placeholder="Ex: Marie Dupont" required>
+        <label class="form-label" for="name">{{ t.Beneficiary_name }}</label>
+        <input type="text" id="name" name="name" class="form-input" placeholder="{{ t.Example_name }}" required>
     </div>
 
     <div class="form-group">
         <label class="form-label" for="iban">IBAN</label>
-        <input type="text" id="iban" name="iban" class="form-input" placeholder="Ex: FR76 1234 5678 9012 3456 7890 123" required>
+        <input type="text" id="iban" name="iban" class="form-input" placeholder="{{ t.Example_iban }}" required>
     </div>
 
     <div class="form-group">
-        <label class="form-label" for="bic">BIC/SWIFT (optionnel)</label>
-        <input type="text" id="bic" name="bic" class="form-input" placeholder="Ex: BNPAFRPP" maxlength="11">
+        <label class="form-label" for="bic">BIC/SWIFT ({{ t.Optional }})</label>
+        <input type="text" id="bic" name="bic" class="form-input" placeholder="{{ t.Example_bic }}" maxlength="11">
     </div>
 
     <div class="form-group">
-        <label class="form-label" for="email">Email (optionnel)</label>
-        <input type="email" id="email" name="email" class="form-input" placeholder="Ex: marie@email.com">
+        <label class="form-label" for="email">{{ t.Email }}</label>
+        <input type="email" id="email" name="email" class="form-input" placeholder="{{ t.Example_email }}" required>
     </div>
 
     <button type="submit" class="submit-btn">
-        Enregistrer le bénéficiaire
+        {{ t.Save_beneficiary }}
     </button>
 </form>
 {% endblock %}
