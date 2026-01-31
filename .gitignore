@@ -32,7 +32,9 @@ venv.bak/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
+# media/ (commenté pour inclure les logos)
+media/profile_pictures/
+media/documents_pdf/
 
 # Static files
 /staticfiles/
