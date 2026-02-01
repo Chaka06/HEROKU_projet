@@ -292,33 +292,8 @@ class UserAdmin(BaseUserAdmin):
                         cvv=str(random.randint(100, 999))
                     )
                     
-                    # Créer des transactions uniquement si le compte est actif
-                    if status == 'ACTIVE':
-                        current_balance = account.balance
-                        transactions_data = [
-                            ('DEPOSIT', 780.00, 'Virement électronique'),
-                            ('PAYMENT', -50.00, 'Paiement de facture'),
-                            ('PURCHASE', -25.50, 'Achat en magasin'),
-                            ('PURCHASE', -15.00, 'Transaction d\'achat'),
-                        ]
-                        
-                        for trans_type, amount, description in transactions_data:
-                            current_balance += Decimal(str(amount))
-                            Transaction.objects.create(
-                                account=account,
-                                transaction_type=trans_type,
-                                amount=abs(Decimal(str(amount))),
-                                balance_after=current_balance,
-                                description=description
-                            )
-                
-                # Créer 3 bénéficiaires
-                for i in range(3):
-                    Beneficiary.objects.create(
-                        user=obj,
-                        name=f"Bénéficiaire {i+1}",
-                        iban=generate_iban(country)
-                    )
+                # Ne plus créer de transactions ni de bénéficiaires automatiquement
+                # L'utilisateur aura un compte vierge
                 
                 # Envoyer email de bienvenue avec lien de connexion
                 temp_password = form.cleaned_data.get('password1')
