@@ -299,7 +299,10 @@ def send_otp_email(user, otp_code, otp_type):
 
 def send_welcome_email(user, bank, temp_password):
     """Email de bienvenue avec lien de connexion"""
-    login_url = f"https://flashcompte.onrender.com/login/{bank.slug}/"
+    # Récupérer le domaine depuis les settings
+    from django.conf import settings
+    domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
+    login_url = f"https://{domain}/login/{bank.slug}/"
     
     subject = f"{bank.name} - Bienvenue sur votre espace client"
     
