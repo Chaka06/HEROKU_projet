@@ -120,31 +120,46 @@
         transform: translateY(-2px);
         box-shadow: var(--shadow-lg);
     }
-    /* Carte Bancaire Virtuelle - Couleurs de la banque */
+    /* Carte Bancaire Virtuelle - Couleurs banque avec overlay sombre */
     .virtual-card {
         background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
         border-radius: 16px;
         padding: 18px 20px;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.1);
         aspect-ratio: 1.586 / 1;
         max-width: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        border: 3px solid rgba(255, 255, 255, 0.15);
     }
     
-    /* Pattern subtil sur la carte */
+    /* Overlay sombre pour contraste avec le background */
     .virtual-card::before {
         content: '';
         position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 100%);
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    /* Pattern géométrique */
+    .virtual-card::after {
+        content: '';
+        position: absolute;
         top: -50%;
-        right: -50%;
+        right: -30%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
         pointer-events: none;
+        z-index: 1;
     }
 
     .card-header {
@@ -194,13 +209,27 @@
         text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
-    /* Numéro de carte en bas */
+    /* Numéro de carte et nom en bas */
     .card-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .card-bottom-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        position: relative;
-        z-index: 2;
+    }
+    
+    .card-holder-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .card-number {
@@ -775,12 +804,15 @@
         <div class="card-balance-amount">{{ primary_account.balance|floatformat:2 }} {{ primary_account.currency|currency_symbol }}</div>
     </div>
     
-    <!-- Numéro de carte masqué et logo en bas -->
+    <!-- Nom du titulaire et numéro de carte -->
     <div class="card-footer">
-        <div class="card-number">{{ primary_card.get_masked_number|slice:":19" }}</div>
-        <div class="network-circles">
-            <div class="network-circle"></div>
-            <div class="network-circle"></div>
+        <div class="card-holder-name">{{ user.get_full_name|upper|default:user.username|upper }}</div>
+        <div class="card-bottom-row">
+            <div class="card-number">{{ primary_card.get_masked_number|slice:":19" }}</div>
+            <div class="network-circles">
+                <div class="network-circle"></div>
+                <div class="network-circle"></div>
+            </div>
         </div>
     </div>
 </div>

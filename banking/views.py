@@ -437,8 +437,13 @@ def transfer_view(request):
                         try:
                             from .email_service import send_transaction_email_to_beneficiary
                             send_transaction_email_to_beneficiary(trans, beneficiary_email, beneficiary_name)
+                            print(f"✅ Email bénéficiaire envoyé à {beneficiary_email}")
                         except Exception as e:
-                            print(f"Erreur envoi email bénéficiaire: {e}")
+                            print(f"❌ Erreur email bénéficiaire: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        print(f"⚠️ Pas d'email bénéficiaire fourni")
                     
                     messages.success(request, f'Virement de {amount}€ effectué avec succès vers {beneficiary_name}. Un email de confirmation vous a été envoyé.')
                     return redirect('banking:dashboard')
