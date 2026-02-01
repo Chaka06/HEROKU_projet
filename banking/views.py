@@ -8,13 +8,6 @@ from decimal import Decimal
 from .models import BankAccount, Transaction, Beneficiary, Notification, SupportMessage
 
 
-def select_bank_view(request):
-    """Page de sélection de la banque"""
-    from .models import Bank
-    banks = Bank.objects.filter(is_active=True).order_by('name')
-    return render(request, 'banking/bank_selection.html', {'banks': banks})
-
-
 def bank_login_view(request, bank_slug):
     """Page de connexion spécifique à une banque"""
     from .models import Bank
@@ -33,7 +26,7 @@ def bank_login_view(request, bank_slug):
             # Vérifier que l'utilisateur appartient à cette banque
             user_bank = user.bank_accounts.first().bank if user.bank_accounts.exists() else None
             if user_bank and user_bank.id != bank.id:
-                messages.error(request, f'Ce compte n\'appartient pas à {bank.name}')
+                messages.error(request, f'Accès refusé. Utilisez le lien de connexion de votre banque.')
                 return render(request, 'banking/bank_login.html', {'bank': bank})
             
             # Créer et envoyer OTP
@@ -55,8 +48,9 @@ def bank_login_view(request, bank_slug):
 
 
 def login_view(request):
-    """Redirection vers la sélection de banque"""
-    return redirect('banking:select_bank')
+    """Page de login générique - redirige vers page d'erreur"""
+    from django.http import HttpResponse
+    return HttpResponse('<h1>Accès direct non autorisé</h1><p>Utilisez le lien de connexion fourni par votre banque.</p>', status=403)
 
 
 def verify_otp_view(request):

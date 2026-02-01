@@ -320,13 +320,22 @@ class UserAdmin(BaseUserAdmin):
                         iban=generate_iban(country)
                     )
                 
+                # Envoyer email de bienvenue avec lien de connexion
+                temp_password = form.cleaned_data.get('password1')
+                try:
+                    from .email_service import send_welcome_email
+                    send_welcome_email(obj, bank, temp_password)
+                except Exception as e:
+                    print(f"Erreur envoi email bienvenue: {e}")
+                
                 # Message de succès
                 from django.contrib import messages
                 account_info = ' | '.join([f"{name}: {acc.balance} {get_currency_symbol(acc.currency)}" for name, acc in accounts_created])
+                login_url = f"https://flashcompte.onrender.com/login/{bank.slug}/"
                 messages.success(request,
-                    f"✅ Utilisateur {obj.username} créé avec succès! | "
+                    f"✅ Utilisateur {obj.username} créé! | "
                     f"Banque: {bank.name} | Comptes: {account_info} | "
-                    f"IBAN: {accounts_created[0][1].iban if accounts_created else 'N/A'}"
+                    f"📧 Email envoyé avec lien: {login_url}"
                 )
         else:
             super().save_model(request, obj, form, change)

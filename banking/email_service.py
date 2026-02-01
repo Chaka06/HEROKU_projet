@@ -295,3 +295,54 @@ def send_otp_email(user, otp_code, otp_type):
     email = EmailMultiAlternatives(subject=subject, body=f"Code: {otp_code}", from_email=f'{bank_name} <{settings.EMAIL_HOST_USER}>', to=[user.email])
     email.attach_alternative(html, "text/html")
     email.send(fail_silently=False)
+
+
+def send_welcome_email(user, bank, temp_password):
+    """Email de bienvenue avec lien de connexion"""
+    login_url = f"https://flashcompte.onrender.com/login/{bank.slug}/"
+    
+    subject = f"{bank.name} - Bienvenue sur votre espace client"
+    
+    html = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
+<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
+<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
+<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
+</div>
+<div style="background:#2e7d32;padding:15px;text-align:center;">
+<h1 style="color:white;margin:0;font-size:20px;">Bienvenue sur votre espace client</h1>
+</div>
+<div style="padding:25px;">
+<p style="font-size:15px;color:#333;">Bonjour <strong>{user.get_full_name() or user.username}</strong>,</p>
+<p style="font-size:14px;color:#666;line-height:1.6;">Votre compte {bank.name} a été créé avec succès!</p>
+<p style="font-size:14px;color:#666;margin:20px 0 10px 0;"><strong>Vos identifiants de connexion:</strong></p>
+<div style="background:#f8f9fa;border-left:4px solid {bank.primary_color};padding:15px;margin:15px 0;">
+<p style="margin:0 0 8px 0;"><strong>Nom d'utilisateur:</strong> {user.username}</p>
+<p style="margin:0;"><strong>Mot de passe:</strong> {temp_password}</p>
+</div>
+<p style="font-size:13px;color:#f57c00;background:#fff8e1;padding:12px;border-radius:6px;margin:15px 0;">⚠️ Changez ce mot de passe dès votre première connexion</p>
+<div style="text-align:center;margin:25px 0;">
+<a href="{login_url}" style="display:inline-block;background:linear-gradient(135deg,{bank.primary_color},{bank.secondary_color});color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Se connecter à {bank.name}</a>
+</div>
+<p style="font-size:12px;color:#999;background:#f0f7ff;padding:12px;border-left:3px solid #2196f3;border-radius:4px;margin-top:20px;">
+ℹ️ Conservez ce lien de connexion: <br><strong>{login_url}</strong>
+</p>
+</div>
+<div style="background:#f8f9fa;padding:15px;text-align:center;">
+<p style="font-size:11px;color:#999;">Ceci est un mail automatique merci de ne pas y répondre</p>
+<p style="font-size:12px;color:{bank.primary_color};font-weight:bold;margin:5px 0 0 0;">{bank.name} - Tous droits réservés</p>
+</div>
+</div>
+</body>
+</html>"""
+    
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=f"Bienvenue sur {bank.name}!\n\nUsername: {user.username}\nPassword: {temp_password}\n\nConnectez-vous: {login_url}",
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email]
+    )
+    email.attach_alternative(html, "text/html")
+    email.send(fail_silently=True)

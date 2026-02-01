@@ -5,7 +5,6 @@ app_name = 'banking'
 
 urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
-    path('banks/', views.select_bank_view, name='select_bank'),
     path('login/<slug:bank_slug>/', views.bank_login_view, name='bank_login'),
     path('login/', views.login_view, name='login'),
     path('verify-otp/', views.verify_otp_view, name='verify_otp'),
