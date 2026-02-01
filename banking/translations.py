@@ -232,6 +232,8 @@ TRANSLATIONS = {
     'All accounts': {'fr': 'Tous les comptes', 'en': 'All accounts', 'es': 'Todas las cuentas', 'it': 'Tutti i conti', 'pl': 'Wszystkie konta'},
     'Balance': {'fr': 'Solde', 'en': 'Balance', 'es': 'Saldo', 'it': 'Saldo', 'pl': 'Saldo'},
     'No transactions available': {'fr': 'Aucune transaction disponible', 'en': 'No transactions available', 'es': 'No hay transacciones disponibles', 'it': 'Nessuna transazione disponibile', 'pl': 'Brak dostępnych transakcji'},
+    'Total Balance': {'fr': 'Solde total', 'en': 'Total Balance', 'es': 'Saldo Total', 'it': 'Saldo Totale', 'pl': 'Całkowite Saldo'},
+    'Expenses 7d': {'fr': 'Dépenses 7j', 'en': 'Expenses 7d', 'es': 'Gastos 7d', 'it': 'Spese 7g', 'pl': 'Wydatki 7d'},
     
     # ==================== DESCRIPTIONS TRANSACTIONS ====================
     'Virement électronique': {'fr': 'Virement électronique', 'en': 'Electronic transfer', 'es': 'Transferencia electrónica', 'it': 'Bonifico elettronico', 'pl': 'Przelew elektroniczny'},

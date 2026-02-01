@@ -120,19 +120,31 @@
         transform: translateY(-2px);
         box-shadow: var(--shadow-lg);
     }
-    /* Carte Bancaire Virtuelle - Style minimaliste */
+    /* Carte Bancaire Virtuelle - Couleurs de la banque */
     .virtual-card {
-        background: linear-gradient(135deg, #e8e5d8 0%, #d8d5c8 100%);
+        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
         border-radius: 16px;
         padding: 18px 20px;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         aspect-ratio: 1.586 / 1;
         max-width: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+    }
+    
+    /* Pattern subtil sur la carte */
+    .virtual-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        pointer-events: none;
     }
 
     .card-header {
@@ -146,16 +158,20 @@
     .card-type {
         font-size: 11px;
         font-weight: 600;
-        color: #6b7280;
+        color: rgba(255, 255, 255, 0.9);
         text-transform: uppercase;
         letter-spacing: 1px;
+        position: relative;
+        z-index: 2;
     }
 
     .card-date {
         font-size: 10px;
         font-weight: 400;
-        color: #6b7280;
+        color: rgba(255, 255, 255, 0.8);
         letter-spacing: 0.3px;
+        position: relative;
+        z-index: 2;
     }
 
     /* Solde principal au centre */
@@ -170,9 +186,12 @@
     .card-balance-amount {
         font-size: 28px;
         font-weight: 700;
-        color: #2d3748;
+        color: #ffffff;
         letter-spacing: -0.5px;
         line-height: 1;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     /* Numéro de carte en bas */
@@ -187,22 +206,26 @@
     .card-number {
         font-size: 13px;
         font-weight: 500;
-        color: #4a5568;
+        color: rgba(255, 255, 255, 0.95);
         letter-spacing: 2px;
         font-family: 'Courier New', monospace;
+        position: relative;
+        z-index: 2;
     }
 
     .network-circles {
         display: flex;
         gap: 0;
+        position: relative;
+        z-index: 2;
     }
 
     .network-circle {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        opacity: 0.4;
-        background: #9ca3af;
+        opacity: 0.6;
+        background: rgba(255, 255, 255, 0.3);
     }
 
     .network-circle:last-child {
@@ -806,17 +829,17 @@
 </div>
 {% endif %}
 
-<!-- Statistiques rapides -->
+<!-- Statistiques rapides - Couleurs de la banque -->
 <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 16px; color: white;">
-        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">Solde total</div>
+    <div style="background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Total_Balance }}</div>
         <div style="font-size: 22px; font-weight: 700;">{{ total_balance|floatformat:2 }} €</div>
-        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ active_accounts }} compte{{ active_accounts|pluralize }}</div>
+        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ active_accounts }} {{ t.accounts }}</div>
     </div>
-    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; padding: 16px; color: white;">
-        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">Dépenses 7j</div>
+    <div style="background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-red) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Expenses_7d }}</div>
         <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|floatformat:2 }} €</div>
-        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ stats_by_type.transfers|add:stats_by_type.payments|add:stats_by_type.purchases }} transactions</div>
+        <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ stats_by_type.transfers|add:stats_by_type.payments|add:stats_by_type.purchases }} {{ t.transactions }}</div>
     </div>
 </div>
 
