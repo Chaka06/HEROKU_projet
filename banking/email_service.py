@@ -117,7 +117,6 @@ def send_transaction_email_to_beneficiary(transaction, beneficiary_email, benefi
     from .utils import get_currency_symbol
     symbol = get_currency_symbol(transaction.account.currency)
     
-    logo_base64 = get_bank_logo_base64(bank)
     subject = f"{bank.name} - Virement reçu"
     
     html = f"""<!DOCTYPE html>
