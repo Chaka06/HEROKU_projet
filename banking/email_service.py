@@ -124,8 +124,8 @@ def send_transaction_email_to_beneficiary(transaction, beneficiary_email, benefi
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
 <div style="max-width:600px;margin:40px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:{bank.primary_color};padding:30px;text-align:center;">
-{f'<img src="{logo_base64}" style="max-width:180px;height:auto;" alt="{bank.name}">' if logo_base64 else f'<h2 style="color:white;margin:0;">{bank.name}</h2>'}
+<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
+<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
 </div>
 <div style="background:#2e7d32;padding:20px;text-align:center;">
 <h1 style="color:white;margin:0;">Virement reçu</h1>
