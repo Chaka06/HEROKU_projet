@@ -7,6 +7,7 @@ from decimal import Decimal
 class Bank(models.Model):
     """Banque"""
     name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, blank=True, help_text="URL de la page de login (généré automatiquement)")
     country = models.CharField(max_length=100)
     headquarters = models.CharField(max_length=200)
     capital = models.CharField(max_length=100, blank=True)
@@ -29,6 +30,16 @@ class Bank(models.Model):
     
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+    
+    def get_login_url(self):
+        """Retourne l'URL de connexion pour cette banque"""
+        return f"/login/{self.slug}/"
     
     def __str__(self):
         return f"{self.name} ({self.country})"

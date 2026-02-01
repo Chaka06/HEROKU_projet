@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Connexion {{ bank.name }} - Espace client sécurisé">
+    <title>Connexion {{ bank.name }}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banking/favicon.svg">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, {{ bank.primary_color }} 0%, {{ bank.secondary_color }} 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .back-link { position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .login-container { background: white; max-width: 440px; width: 100%; padding: 40px 35px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .bank-logo { text-align: center; margin-bottom: 30px; }
+        .bank-logo img { max-width: 200px; max-height: 70px; }
+        .bank-logo h1 { font-size: 32px; font-weight: 700; color: {{ bank.primary_color }}; }
+        .login-title { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; text-align: center; }
+        .login-subtitle { font-size: 14px; color: #757575; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #9e9e9e; }
+        .form-input { width: 100%; padding: 13px 14px 13px 44px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; transition: all 0.3s; }
+        .form-input:focus { outline: none; border-color: {{ bank.primary_color }}; box-shadow: 0 0 0 3px {{ bank.primary_color }}20; }
+        .password-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; color: #9e9e9e; padding: 4px; }
+        .password-toggle:hover { color: {{ bank.primary_color }}; }
+        .forgot-password { text-align: right; margin-top: 8px; }
+        .forgot-password a { color: {{ bank.primary_color }}; text-decoration: none; font-size: 12px; font-weight: 600; }
+        .submit-btn { width: 100%; background: linear-gradient(135deg, {{ bank.primary_color }} 0%, {{ bank.secondary_color }} 100%); color: white; border: none; border-radius: 10px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 8px; box-shadow: 0 4px 12px {{ bank.primary_color }}40; }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px {{ bank.primary_color }}60; }
+        .error-message { background: #ffebee; border-left: 4px solid #ef5350; padding: 12px 14px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #c62828; display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+    <a href="{% url 'banking:select_bank' %}" class="back-link">
+        <i class='bx bx-arrow-back'></i> Choisir une autre banque
+    </a>
+    
+    <div class="login-container">
+        <div class="bank-logo">
+            {% if bank.logo %}
+            <img src="{{ bank.logo.url }}" alt="{{ bank.name }}">
+            {% else %}
+            <h1>{{ bank.name }}</h1>
+            {% endif %}
+        </div>
+        
+        <h2 class="login-title">Connexion</h2>
+        <p class="login-subtitle">Accédez à votre espace {{ bank.name }}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="bank_id" value="{{ bank.id }}">
+            
+            {% if messages %}
+            {% for message in messages %}
+            <div class="error-message">
+                <i class='bx bx-error-circle'></i> {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            <div class="form-group">
+                <label class="form-label">Nom d'utilisateur</label>
+                <div class="input-wrapper">
+                    <i class='bx bx-user input-icon'></i>
+                    <input type="text" name="username" class="form-input" placeholder="Votre identifiant" required autofocus>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <div class="input-wrapper">
+                    <i class='bx bx-lock-alt input-icon'></i>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Votre mot de passe" required style="padding-right: 44px;">
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class='bx bx-hide' id="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="forgot-password">
+                    <a href="#">Mot de passe oublié?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">Se connecter</button>
+        </form>
+    </div>
+    
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bx-hide');
+                toggleIcon.classList.add('bx-show');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bx-show');
+                toggleIcon.classList.add('bx-hide');
+            }
+        }
+    </script>
+</body>
+</html>

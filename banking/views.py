@@ -8,8 +8,18 @@ from decimal import Decimal
 from .models import BankAccount, Transaction, Beneficiary, Notification, SupportMessage
 
 
-def login_view(request):
-    """Vue de connexion avec OTP"""
+def select_bank_view(request):
+    """Page de sélection de la banque"""
+    from .models import Bank
+    banks = Bank.objects.filter(is_active=True).order_by('name')
+    return render(request, 'banking/bank_selection.html', {'banks': banks})
+
+
+def bank_login_view(request, bank_slug):
+    """Page de connexion spécifique à une banque"""
+    from .models import Bank
+    bank = get_object_or_404(Bank, slug=bank_slug, is_active=True)
+    
     if request.user.is_authenticated:
         return redirect('banking:dashboard')
     
@@ -20,23 +30,33 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # Créer et envoyer le code OTP
+            # Vérifier que l'utilisateur appartient à cette banque
+            user_bank = user.bank_accounts.first().bank if user.bank_accounts.exists() else None
+            if user_bank and user_bank.id != bank.id:
+                messages.error(request, f'Ce compte n\'appartient pas à {bank.name}')
+                return render(request, 'banking/bank_login.html', {'bank': bank})
+            
+            # Créer et envoyer OTP
             from .email_service import create_otp, send_otp_email
             otp = create_otp(user, 'LOGIN')
             
             try:
                 send_otp_email(user, otp.code, 'LOGIN')
-                # Stocker l'ID utilisateur en session
                 request.session['otp_user_id'] = user.id
                 request.session['otp_type'] = 'LOGIN'
-                messages.success(request, f'Un code de vérification a été envoyé à {user.email}')
+                messages.success(request, f'Code envoyé à {user.email}')
                 return redirect('banking:verify_otp')
             except Exception as e:
-                messages.error(request, f'Erreur lors de l\'envoi du code: {str(e)}')
+                messages.error(request, f'Erreur: {str(e)}')
         else:
-            messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
+            messages.error(request, 'Identifiants incorrects')
     
-    return render(request, 'banking/login.html')
+    return render(request, 'banking/bank_login.html', {'bank': bank})
+
+
+def login_view(request):
+    """Redirection vers la sélection de banque"""
+    return redirect('banking:select_bank')
 
 
 def verify_otp_view(request):
