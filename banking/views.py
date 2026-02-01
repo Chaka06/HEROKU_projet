@@ -764,7 +764,17 @@ def reject_transaction_view(request, transaction_id):
 
 @login_required
 def logout_view(request):
-    """Vue de déconnexion"""
+    """Vue de déconnexion - Redirige vers la page de login de la banque"""
+    # Récupérer la banque de l'utilisateur AVANT de le déconnecter
+    user_bank = None
+    if request.user.bank_accounts.exists():
+        user_bank = request.user.bank_accounts.first().bank
+    
     logout(request)
     messages.success(request, 'Vous avez été déconnecté avec succès.')
-    return redirect('banking:login')
+    
+    # Rediriger vers la page de login de sa banque
+    if user_bank and user_bank.slug:
+        return redirect('banking:bank_login', bank_slug=user_bank.slug)
+    else:
+        return redirect('banking:login')
