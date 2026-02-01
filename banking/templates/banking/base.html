@@ -465,7 +465,7 @@
             overlay.classList.remove('show');
         }
 
-        // Fonction pour afficher les toasts
+        // Fonction pour afficher les toasts améliorés
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             
@@ -476,20 +476,61 @@
                 'info': 'bx-info-circle'
             };
             
+            const colors = {
+                'success': '#2e7d32',
+                'error': '#c62828',
+                'warning': '#f57c00',
+                'info': 'var(--primary-red)'
+            };
+            
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                border-left: 4px solid ${colors[type]};
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                max-width: 400px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                font-size: 14px;
+                color: #1a1a1a;
+            `;
+            
             toast.innerHTML = `
-                <i class='bx ${icons[type]} toast-icon'></i>
-                <div class="toast-message">${message}</div>
+                <i class='bx ${icons[type]}' style="font-size: 22px; color: ${colors[type]};"></i>
+                <div style="flex: 1; font-weight: 500;">${message}</div>
+                <i class='bx bx-x' onclick="this.parentElement.remove()" style="font-size: 20px; color: #999; cursor: pointer;"></i>
             `;
             
             container.appendChild(toast);
             
-            // Retirer après 3 secondes
+            // Retirer après 4 secondes
             setTimeout(() => {
-                toast.remove();
-            }, 3000);
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
+        
+        // Animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
 
         // Afficher les messages Django comme toasts
         {% if messages %}
