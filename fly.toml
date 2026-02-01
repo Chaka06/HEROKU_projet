@@ -1,0 +1,25 @@
+# Configuration Fly.io
+app = "flashcompte"
+primary_region = "cdg"  # Paris
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[env]
+  PORT = "8080"
+  PYTHON_VERSION = "3.11"
+
+[[statics]]
+  guest_path = "/app/staticfiles"
+  url_prefix = "/static/"
