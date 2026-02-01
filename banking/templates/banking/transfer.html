@@ -566,7 +566,7 @@
 
     <div class="beneficiary-list">
         {% for beneficiary in beneficiaries %}
-        <div class="beneficiary-card" onclick="fillBeneficiary('{{ beneficiary.name }}', '{{ beneficiary.iban }}')">
+        <div class="beneficiary-card" onclick="fillBeneficiary('{{ beneficiary.name }}', '{{ beneficiary.iban }}', '{{ beneficiary.email }}')">
             <div class="beneficiary-avatar color-{{ forloop.counter|divisibleby:3|yesno:'3,2,1' }}">
                 {{ beneficiary.get_initials }}
             </div>
@@ -597,9 +597,10 @@
         document.getElementById('fromAccount').value = accountId;
     }
     
-    function fillBeneficiary(name, iban) {
+    function fillBeneficiary(name, iban, email) {
         document.getElementById('beneficiary').value = name;
         document.getElementById('iban').value = iban;
+        document.getElementById('beneficiary_email').value = email || '';  // Remplir l'email!
         
         // Scroll vers le formulaire
         document.querySelector('.transfer-form').scrollIntoView({ behavior: 'smooth' });
