@@ -5,9 +5,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.utils import timezone
 import random
-from datetime import timedelta
-import os
 import base64
+import os
+from datetime import timedelta
 
 
 def generate_otp_code():
@@ -39,312 +39,686 @@ def verify_otp(user, code, otp_type):
     return False
 
 
-# Fonction logo supprimée - on utilise juste le nom de la banque
+# ─────────────────────────────────────────────
+#  HELPER : logo encodé en base64
+# ─────────────────────────────────────────────
 
+def _get_logo_html(bank):
+    """Retourne le tag <img> du logo en base64 ou un texte fallback."""
+    try:
+        if bank.logo and hasattr(bank.logo, 'path') and os.path.exists(bank.logo.path):
+            with open(bank.logo.path, 'rb') as f:
+                data = base64.b64encode(f.read()).decode('utf-8')
+            ext = os.path.splitext(bank.logo.path)[1].lower().lstrip('.')
+            mime = 'jpeg' if ext in ('jpg', 'jpeg') else ext
+            return (
+                f'<img src="data:image/{mime};base64,{data}" '
+                f'alt="{bank.name}" '
+                f'style="max-height:60px;max-width:180px;object-fit:contain;display:block;margin:0 auto 12px;" />'
+            )
+    except Exception:
+        pass
+    return ''
+
+
+# ─────────────────────────────────────────────
+#  HELPER : constructeur HTML commun
+# ─────────────────────────────────────────────
+
+def _build_email_html(
+    bank,
+    status_color,
+    status_label,
+    status_icon,
+    greeting_name,
+    intro_text,
+    amount_display,
+    primary_color,
+    rows_html,
+    extra_block='',
+):
+    """Construit le HTML complet d'un email style bancaire professionnel."""
+    from datetime import datetime
+    year = datetime.now().year
+    logo_html = _get_logo_html(bank)
+    bank_secondary = getattr(bank, 'secondary_color', primary_color)
+
+    return f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>{bank.name}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0f0f0;padding:32px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Email card -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;
+                      overflow:hidden;box-shadow:0 6px 32px rgba(0,0,0,0.10);">
+
+          <!-- ── HEADER ── -->
+          <tr>
+            <td style="background:linear-gradient(135deg,{primary_color} 0%,{bank_secondary} 100%);
+                        padding:36px 40px 28px;text-align:center;">
+              {logo_html}
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;
+                          letter-spacing:0.5px;text-transform:uppercase;
+                          text-shadow:0 1px 3px rgba(0,0,0,0.25);">
+                {bank.name}
+              </h1>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,0.80);font-size:13px;">
+                Service Client en ligne
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── STATUS BANNER ── -->
+          <tr>
+            <td style="background:{status_color};padding:18px 40px;text-align:center;">
+              <span style="color:#ffffff;font-size:17px;font-weight:700;letter-spacing:0.3px;">
+                {status_icon}&nbsp;&nbsp;{status_label}
+              </span>
+            </td>
+          </tr>
+
+          <!-- ── BODY ── -->
+          <tr>
+            <td style="padding:36px 40px 28px;">
+
+              <!-- Greeting -->
+              <p style="margin:0 0 18px;font-size:16px;color:#1a1a2e;font-weight:600;">
+                Bonjour {greeting_name},
+              </p>
+
+              <!-- Intro -->
+              <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.7;">
+                {intro_text}
+              </p>
+
+              <!-- Amount card (masqué si vide) -->
+              {'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#f8f9fa 0%,#eef0f3 100%);border-radius:12px;border:1px solid #e2e5ea;margin-bottom:28px;"><tr><td style="padding:28px;text-align:center;"><p style="margin:0 0 6px;font-size:11px;color:#888888;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Montant de l\'opération</p><p style="margin:0;font-size:40px;font-weight:800;color:' + primary_color + ';letter-spacing:-1px;">' + amount_display + '</p></td></tr></table>' if amount_display else ''}
+
+              <!-- Details table -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="border-collapse:collapse;border-radius:10px;overflow:hidden;
+                             border:1px solid #e8eaed;">
+                {rows_html}
+              </table>
+
+              {extra_block}
+
+              <!-- Security notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="margin-top:28px;">
+                <tr>
+                  <td style="background:#f8f9fa;border-left:4px solid {primary_color};
+                               padding:14px 16px;border-radius:0 8px 8px 0;">
+                    <p style="margin:0;font-size:12px;color:#777777;line-height:1.6;">
+                      🔒 <strong>Sécurité :</strong> Si vous n'êtes pas à l'origine de cette opération,
+                      contactez immédiatement votre conseiller bancaire.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- ── DIVIDER ── -->
+          <tr>
+            <td style="padding:0 40px;">
+              <div style="height:1px;background:#eeeeee;"></div>
+            </td>
+          </tr>
+
+          <!-- ── FOOTER ── -->
+          <tr>
+            <td style="padding:24px 40px;text-align:center;background:#fafafa;">
+              <p style="margin:0 0 6px;font-size:12px;color:#aaaaaa;">
+                Ce message est généré automatiquement &mdash; merci de ne pas y répondre.
+              </p>
+              <p style="margin:0;font-size:12px;font-weight:700;color:{primary_color};">
+                &copy; {year} {bank.name} &mdash; Tous droits réservés
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Below-card notice -->
+        <p style="margin:20px 0 0;font-size:11px;color:#bbbbbb;text-align:center;">
+          Vous recevez cet e-mail car vous êtes titulaire d'un compte {bank.name}.
+        </p>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>"""
+
+
+def _row(label, value, zebra=False):
+    """Génère une ligne du tableau de détails."""
+    bg = '#f8f9fa' if zebra else '#ffffff'
+    return f"""
+    <tr>
+      <td style="padding:13px 18px;background:{bg};border-bottom:1px solid #e8eaed;
+                  font-size:13px;color:#888888;font-weight:600;width:40%;
+                  white-space:nowrap;">
+        {label}
+      </td>
+      <td style="padding:13px 18px;background:{bg};border-bottom:1px solid #e8eaed;
+                  font-size:13px;color:#1a1a2e;font-weight:500;">
+        {value}
+      </td>
+    </tr>"""
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 1 — Virement émis (vers le titulaire)
+# ─────────────────────────────────────────────
 
 def send_transaction_email_to_sender(transaction):
-    """Email au titulaire avec PDF"""
+    """Email au titulaire lors d'un virement."""
     user = transaction.account.user
     bank = transaction.account.bank
     from .utils import get_currency_symbol
     symbol = get_currency_symbol(transaction.account.currency)
-    
-    if transaction.status == 'PENDING':
-        title = "Virement en attente"
-        bg_color = "#ff9800"
-    elif transaction.status == 'COMPLETED':
-        title = "Virement confirmé"
-        bg_color = "#2e7d32"
-    else:
-        title = "Virement rejeté"
-        bg_color = "#c62828"
-    
-    subject = f"{bank.name} - {title}"
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-</head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
-<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
-</div>
-<div style="background:{bg_color};padding:15px;text-align:center;">
-<h1 style="color:white;margin:0;font-size:20px;">{title}</h1>
-</div>
-<div style="padding:20px;">
-<p style="font-size:15px;color:#333;">Bonjour <strong>{user.get_full_name() or user.username}</strong>,</p>
-<p style="font-size:14px;color:#666;">Nous vous informons qu'un virement d'un montant de <strong>{transaction.amount} {symbol}</strong> a été effectué <strong>depuis votre compte</strong> {transaction.account.get_account_type_display()} N° <strong>{transaction.account.account_number}</strong></p>
-<p style="font-size:13px;color:#666;">Vous recevrez le statut final sous 48h maximum</p>
-<p style="font-size:13px;color:#666;margin-bottom:15px;">Détails de la transaction :</p>
-<table style="width:100%;border-collapse:collapse;margin:10px 0;">
-<tr><td style="padding:10px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Montant</td><td style="padding:10px;border:1px solid #ddd;">{transaction.amount} {symbol}</td></tr>
-<tr><td style="padding:10px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Donneur d'ordre</td><td style="padding:10px;border:1px solid #ddd;">{user.get_full_name() or user.username}</td></tr>
-<tr><td style="padding:10px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Motif</td><td style="padding:10px;border:1px solid #ddd;">{transaction.description or 'Non spécifié'}</td></tr>
-<tr><td style="padding:10px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Vers le compte</td><td style="padding:10px;border:1px solid #ddd;">{transaction.recipient_iban or 'Non spécifié'}</td></tr>
-</table>
-</div>
-<div style="background:#f8f9fa;padding:15px;text-align:center;">
-<p style="font-size:11px;color:#999;margin:0;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:12px;color:{bank.primary_color};font-weight:bold;margin:5px 0 0 0;">{bank.name} - Tous droits réservés</p>
-</div>
-</div>
-</body>
-</html>"""
-    
-    plain = f"{bank.name} - {title}\n\nBonjour {user.get_full_name()},\n\nVirement de {transaction.amount} {symbol} depuis votre compte.\n\n{bank.name}"
-    
-    email = EmailMultiAlternatives(subject=subject, body=plain, from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>', to=[user.email])
-    email.attach_alternative(html, "text/html")
-    
-    # Attacher PDF
+    primary = bank.primary_color
+
+    status_map = {
+        'PENDING':   ('#F59E0B', 'Virement en attente de validation', '⏳'),
+        'COMPLETED': ('#16A34A', 'Virement confirmé',                 '✅'),
+        'REJECTED':  ('#DC2626', 'Virement rejeté',                   '❌'),
+    }
+    status_color, status_label, status_icon = status_map.get(
+        transaction.status, ('#6B7280', transaction.status, 'ℹ️')
+    )
+
+    rows = (
+        _row('Donneur d\'ordre',   f'<strong>{user.get_full_name() or user.username}</strong>', False) +
+        _row('Compte débité',      f'{transaction.account.get_account_type_display()} &bull; {transaction.account.account_number}', True) +
+        _row('Bénéficiaire',       transaction.recipient or '—',                 False) +
+        _row('IBAN destinataire',  f'<code style="font-size:12px;">{transaction.recipient_iban or "—"}</code>', True) +
+        _row('Référence',          transaction.reference or '—',                 False) +
+        _row('Motif',              transaction.description or '—',               True) +
+        _row('Date',               transaction.created_at.strftime('%d %B %Y à %H:%M'), False) +
+        _row('Référence interne',  f'T{str(transaction.id).zfill(6)}',           True)
+    )
+
+    html = _build_email_html(
+        bank=bank,
+        status_color=status_color,
+        status_label=status_label,
+        status_icon=status_icon,
+        greeting_name=user.get_full_name() or user.username,
+        intro_text=(
+            f'Nous vous informons qu\'un virement d\'un montant de '
+            f'<strong>{transaction.amount} {symbol}</strong> a été initié depuis votre '
+            f'compte <strong>{transaction.account.get_account_type_display()}</strong>. '
+            f'Vous recevrez le statut final sous 48&nbsp;h maximum.'
+        ),
+        amount_display=f'{transaction.amount} {symbol}',
+        primary_color=primary,
+        rows_html=rows,
+    )
+
+    plain = (
+        f'{bank.name} — {status_label}\n\n'
+        f'Bonjour {user.get_full_name() or user.username},\n\n'
+        f'Virement de {transaction.amount} {symbol} depuis votre compte.\n'
+        f'Référence : T{str(transaction.id).zfill(6)}\n\n{bank.name}'
+    )
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — {status_label}',
+        body=plain,
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email],
+    )
+    msg.attach_alternative(html, 'text/html')
+
     try:
         from .pdf_generator import generate_transaction_receipt_pdf
         pdf = generate_transaction_receipt_pdf(transaction)
-        email.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
+        msg.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
     except Exception as e:
-        print(f"Erreur PDF: {e}")
-    
-    email.send(fail_silently=False)
+        print(f'Erreur PDF: {e}')
 
+    msg.send(fail_silently=False)
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 2 — Virement reçu (vers le bénéficiaire)
+# ─────────────────────────────────────────────
 
 def send_transaction_email_to_beneficiary(transaction, beneficiary_email, beneficiary_name):
-    """Email au bénéficiaire avec PDF"""
+    """Email au bénéficiaire lors de la réception d'un virement."""
     user = transaction.account.user
     bank = transaction.account.bank
     from .utils import get_currency_symbol
     symbol = get_currency_symbol(transaction.account.currency)
-    
-    subject = f"{bank.name} - Virement reçu"
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:40px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
-<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
-</div>
-<div style="background:#2e7d32;padding:20px;text-align:center;">
-<h1 style="color:white;margin:0;">Virement reçu</h1>
-</div>
-<div style="padding:30px;">
-<p>Bonjour <strong>{beneficiary_name}</strong>,</p>
-<p>Un virement de <strong>{transaction.amount} {symbol}</strong> a été effectué vers votre compte par <strong>{user.get_full_name() or user.username}</strong></p>
-<h2 style="font-size:20px;text-align:center;margin:20px 0 15px 0;">Détail de la transaction</h2>
-<table style="width:100%;border-collapse:collapse;">
-<tr><td style="padding:12px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Montant</td><td style="padding:12px;border:1px solid #ddd;"><strong>{transaction.amount} {symbol}</strong></td></tr>
-<tr><td style="padding:12px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Émetteur</td><td style="padding:12px;border:1px solid #ddd;">{user.get_full_name() or user.username}</td></tr>
-<tr><td style="padding:12px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Motif</td><td style="padding:12px;border:1px solid #ddd;">{transaction.description or 'Non spécifié'}</td></tr>
-<tr><td style="padding:12px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;">Date</td><td style="padding:12px;border:1px solid #ddd;">{transaction.created_at.strftime('%d/%m/%Y à %H:%M')}</td></tr>
-</table>
-</div>
-<div style="background:#f8f9fa;padding:20px;text-align:center;">
-<p style="font-size:12px;color:#999;margin:0;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:13px;color:{bank.primary_color};font-weight:bold;margin:5px 0;">{bank.name}</p>
-<p style="font-size:11px;color:#bbb;margin:0;">Tous droits réservés</p>
-</div>
-</div>
-</body>
-</html>"""
-    
-    email = EmailMultiAlternatives(subject=subject, body=f"Virement de {transaction.amount} {symbol}", from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>', to=[beneficiary_email])
-    email.attach_alternative(html, "text/html")
-    
+    primary = bank.primary_color
+
+    rows = (
+        _row('Émetteur',          f'<strong>{user.get_full_name() or user.username}</strong>', False) +
+        _row('Banque émettrice',  bank.name,                                                   True) +
+        _row('Motif',             transaction.description or '—',                              False) +
+        _row('Date de réception', transaction.created_at.strftime('%d %B %Y à %H:%M'),        True) +
+        _row('Référence',         f'T{str(transaction.id).zfill(6)}',                         False)
+    )
+
+    html = _build_email_html(
+        bank=bank,
+        status_color='#16A34A',
+        status_label='Virement reçu',
+        status_icon='💳',
+        greeting_name=beneficiary_name,
+        intro_text=(
+            f'<strong>{user.get_full_name() or user.username}</strong> vous a envoyé un virement '
+            f'd\'un montant de <strong>{transaction.amount} {symbol}</strong> via <strong>{bank.name}</strong>. '
+            f'Les fonds sont disponibles sur votre compte.'
+        ),
+        amount_display=f'{transaction.amount} {symbol}',
+        primary_color=primary,
+        rows_html=rows,
+    )
+
+    plain = f'Virement reçu de {user.get_full_name() or user.username} : {transaction.amount} {symbol}'
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — Virement reçu de {user.get_full_name() or user.username}',
+        body=plain,
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[beneficiary_email],
+    )
+    msg.attach_alternative(html, 'text/html')
+
     try:
         from .pdf_generator import generate_transaction_receipt_pdf
         pdf = generate_transaction_receipt_pdf(transaction)
-        email.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
-    except:
+        msg.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
+    except Exception:
         pass
-    
-    email.send(fail_silently=False)
 
+    msg.send(fail_silently=False)
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 3 — Transaction confirmée
+# ─────────────────────────────────────────────
 
 def send_transaction_confirmation_email(transaction):
-    """Email confirmation avec PDF"""
+    """Email de confirmation de transaction."""
     user = transaction.account.user
     bank = transaction.account.bank
     from .utils import get_currency_symbol
     symbol = get_currency_symbol(transaction.account.currency)
-    
-    subject = f"{bank.name} - Transaction confirmée"
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
-<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
-</div>
-<div style="background:#2e7d32;padding:20px;text-align:center;">
-<h1 style="color:white;margin:0;">Transaction Confirmée</h1>
-</div>
-<div style="padding:30px;">
-<p>Bonjour <strong>{user.get_full_name()}</strong>,</p>
-<p>Votre transaction de <strong>{transaction.amount} {symbol}</strong> a été confirmée.</p>
-<p>Le bordereau est joint en pièce jointe.</p>
-</div>
-<div style="background:#f8f9fa;padding:20px;text-align:center;">
-<p style="font-size:12px;color:#999;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:13px;color:{bank.primary_color};font-weight:bold;margin:5px 0;">{bank.name}</p>
-<p style="font-size:11px;color:#bbb;">Tous droits réservés</p>
-</div>
-</div>
-</body>
-</html>"""
-    
-    email = EmailMultiAlternatives(subject=subject, body=f"Confirmée: {transaction.amount} {symbol}", from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>', to=[user.email])
-    email.attach_alternative(html, "text/html")
-    
+    primary = bank.primary_color
+
+    rows = (
+        _row('Type',             transaction.get_transaction_type_display(), False) +
+        _row('Compte',           f'{transaction.account.get_account_type_display()} &bull; {transaction.account.account_number}', True) +
+        _row('Bénéficiaire',     transaction.recipient or '—',              False) +
+        _row('Solde après op.',  f'{transaction.balance_after} {symbol}',   True) +
+        _row('Date confirmation', transaction.confirmed_at.strftime('%d %B %Y à %H:%M') if transaction.confirmed_at else '—', False) +
+        _row('Référence',        f'T{str(transaction.id).zfill(6)}',        True)
+    )
+
+    html = _build_email_html(
+        bank=bank,
+        status_color='#16A34A',
+        status_label='Transaction confirmée',
+        status_icon='✅',
+        greeting_name=user.get_full_name() or user.username,
+        intro_text=(
+            f'Votre transaction de <strong>{transaction.amount} {symbol}</strong> a été '
+            f'<strong>confirmée avec succès</strong>. Le bordereau est joint en pièce jointe.'
+        ),
+        amount_display=f'{transaction.amount} {symbol}',
+        primary_color=primary,
+        rows_html=rows,
+    )
+
+    plain = f'{bank.name} — Transaction confirmée : {transaction.amount} {symbol}'
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — Transaction confirmée',
+        body=plain,
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email],
+    )
+    msg.attach_alternative(html, 'text/html')
+
     try:
         from .pdf_generator import generate_transaction_receipt_pdf
         pdf = generate_transaction_receipt_pdf(transaction)
-        email.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
-    except:
+        msg.attach(f'bordereau_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
+    except Exception:
         pass
-    
-    email.send(fail_silently=False)
 
+    msg.send(fail_silently=False)
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 4 — Transaction rejetée
+# ─────────────────────────────────────────────
 
 def send_transaction_rejection_email(transaction):
-    """Email rejet avec PDF"""
+    """Email de rejet de transaction."""
     user = transaction.account.user
     bank = transaction.account.bank
     from .utils import get_currency_symbol
     symbol = get_currency_symbol(transaction.account.currency)
-    
-    subject = f"{bank.name} - Transaction rejetée par la banque"
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
-<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
-</div>
-<div style="background:#c62828;padding:15px;text-align:center;">
-<h1 style="color:white;margin:0;font-size:20px;">Transaction Rejetée</h1>
-</div>
-<div style="padding:20px;">
-<p style="font-size:15px;color:#333;">Bonjour <strong>{user.get_full_name()}</strong>,</p>
-<p style="background:#ffebee;padding:12px;border-left:4px solid #c62828;font-size:14px;">⚠️ Transaction de <strong>{transaction.amount} {symbol}</strong> rejetée par <strong>{bank.name}</strong></p>
-<p style="font-size:14px;"><strong>Motif:</strong> {transaction.rejection_reason or 'Non spécifié'}</p>
-{f'<p style="font-size:14px;">Frais: {transaction.rejection_fee} {symbol}</p>' if transaction.rejection_fee > 0 else ''}
-<p style="font-size:13px;color:#666;">Le montant a été remboursé.</p>
-</div>
-<div style="background:#f8f9fa;padding:15px;text-align:center;">
-<p style="font-size:11px;color:#999;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:12px;color:{bank.primary_color};font-weight:bold;margin:5px 0 0 0;">{bank.name} - Tous droits réservés</p>
-</div>
-</div>
-</body>
-</html>"""
-    
-    email = EmailMultiAlternatives(subject=subject, body=f"Rejeté: {transaction.amount} {symbol}", from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>', to=[user.email])
-    email.attach_alternative(html, "text/html")
-    
+    primary = bank.primary_color
+
+    rows = (
+        _row('Type',           transaction.get_transaction_type_display(), False) +
+        _row('Montant rejeté', f'{transaction.amount} {symbol}',           True) +
+        _row('Motif du rejet', transaction.rejection_reason or '—',        False) +
+        _row('Frais de rejet', f'{transaction.rejection_fee} {symbol}' if transaction.rejection_fee and transaction.rejection_fee > 0 else 'Aucun', True) +
+        _row('Solde après op.', f'{transaction.balance_after} {symbol}',   False) +
+        _row('Date du rejet',  transaction.rejected_at.strftime('%d %B %Y à %H:%M') if transaction.rejected_at else '—', True) +
+        _row('Référence',      f'T{str(transaction.id).zfill(6)}',         False)
+    )
+
+    refund_block = f"""
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+      <tr>
+        <td style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:18px 20px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#DC2626;">
+            ⚠️ Remboursement effectué
+          </p>
+          <p style="margin:0;font-size:13px;color:#6B7280;line-height:1.6;">
+            Le montant de <strong>{transaction.amount} {symbol}</strong> a été
+            recrédité sur votre compte.
+            {"Des frais de rejet de <strong>" + str(transaction.rejection_fee) + " " + symbol + "</strong> ont été prélevés." if transaction.rejection_fee and transaction.rejection_fee > 0 else ""}
+          </p>
+        </td>
+      </tr>
+    </table>"""
+
+    html = _build_email_html(
+        bank=bank,
+        status_color='#DC2626',
+        status_label='Transaction rejetée',
+        status_icon='❌',
+        greeting_name=user.get_full_name() or user.username,
+        intro_text=(
+            f'Nous vous informons que votre transaction de '
+            f'<strong>{transaction.amount} {symbol}</strong> a été '
+            f'<strong>rejetée par {bank.name}</strong>. Le montant a été remboursé sur votre compte.'
+        ),
+        amount_display=f'{transaction.amount} {symbol}',
+        primary_color=primary,
+        rows_html=rows,
+        extra_block=refund_block,
+    )
+
+    plain = f'{bank.name} — Transaction rejetée : {transaction.amount} {symbol}. Motif : {transaction.rejection_reason}'
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — Transaction rejetée',
+        body=plain,
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email],
+    )
+    msg.attach_alternative(html, 'text/html')
+
     try:
         from .pdf_generator import generate_transaction_receipt_pdf
         pdf = generate_transaction_receipt_pdf(transaction)
-        email.attach(f'bordereau_rejet_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
-    except:
+        msg.attach(f'bordereau_rejet_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
+    except Exception:
         pass
-    
-    email.send(fail_silently=False)
 
+    msg.send(fail_silently=False)
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 5 — Code OTP
+# ─────────────────────────────────────────────
 
 def send_otp_email(user, otp_code, otp_type):
-    """Email OTP"""
+    """Email avec code OTP."""
     account = user.bank_accounts.first()
     bank = account.bank if account and account.bank else None
-    bank_name = bank.name if bank else "Banque"
-    bank_color = bank.primary_color if bank else "#009464"
-    
-    subject = f'{bank_name} - Code de connexion'
-    
+    bank_name = bank.name if bank else 'Banque'
+    primary = bank.primary_color if bank else '#1A56DB'
+    bank_secondary = getattr(bank, 'secondary_color', primary) if bank else primary
+    logo_html = _get_logo_html(bank) if bank else ''
+
+    otp_label_map = {
+        'LOGIN':           ('Connexion à votre espace', '🔑'),
+        'CHANGE_PASSWORD': ('Changement de mot de passe', '🔒'),
+        'EDIT_PROFILE':    ('Modification de profil', '👤'),
+    }
+    otp_label, otp_icon = otp_label_map.get(otp_type, ('Vérification', '🔐'))
+
+    from datetime import datetime
+    year = datetime.now().year
+
     html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:{bank_color};padding:25px;text-align:center;">
-<h2 style="color:white;margin:0;font-size:24px;">{bank_name}</h2>
-</div>
-<div style="padding:25px;">
-<p style="font-size:15px;color:#333;">Bonjour <strong>{user.get_full_name() or user.username}</strong>,</p>
-<p style="font-size:14px;color:#666;">Votre code de vérification:</p>
-<div style="background:#f8f9fa;border:2px solid {bank_color};border-radius:8px;padding:20px;text-align:center;margin:20px 0;">
-<div style="font-size:32px;font-weight:bold;color:{bank_color};letter-spacing:6px;">{otp_code}</div>
-<p style="font-size:11px;color:#999;margin:8px 0 0 0;">Valable 10 minutes</p>
-</div>
-</div>
-<div style="background:#f8f9fa;padding:15px;text-align:center;">
-<p style="font-size:11px;color:#999;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:12px;color:{bank_color};font-weight:bold;margin:5px 0 0 0;">{bank_name} - Tous droits réservés</p>
-</div>
-</div>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0f0f0;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:520px;width:100%;background:#ffffff;border-radius:14px;
+                      overflow:hidden;box-shadow:0 6px 32px rgba(0,0,0,0.10);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,{primary} 0%,{bank_secondary} 100%);
+                        padding:32px 40px 24px;text-align:center;">
+              {logo_html}
+              <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;
+                          text-transform:uppercase;letter-spacing:0.5px;">
+                {bank_name}
+              </h1>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,0.80);font-size:12px;">
+                Service de sécurité
+              </p>
+            </td>
+          </tr>
+
+          <!-- STATUS -->
+          <tr>
+            <td style="background:#1E3A5F;padding:16px 40px;text-align:center;">
+              <span style="color:#ffffff;font-size:16px;font-weight:700;">
+                {otp_icon}&nbsp;&nbsp;{otp_label}
+              </span>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:36px 40px 28px;text-align:center;">
+              <p style="margin:0 0 10px;font-size:16px;color:#1a1a2e;font-weight:600;text-align:left;">
+                Bonjour {user.get_full_name() or user.username},
+              </p>
+              <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.7;text-align:left;">
+                Voici votre code de vérification à usage unique. Il est valable pendant
+                <strong>10 minutes</strong>.
+              </p>
+
+              <!-- Code OTP -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="background:linear-gradient(135deg,#f8f9fa 0%,#eef0f3 100%);
+                             border-radius:14px;border:2px solid {primary};margin-bottom:28px;">
+                <tr>
+                  <td style="padding:30px 20px;text-align:center;">
+                    <p style="margin:0 0 10px;font-size:11px;color:#888888;
+                               text-transform:uppercase;letter-spacing:2px;font-weight:600;">
+                      Code de vérification
+                    </p>
+                    <p style="margin:0;font-size:48px;font-weight:800;color:{primary};
+                               letter-spacing:12px;font-variant-numeric:tabular-nums;">
+                      {otp_code}
+                    </p>
+                    <p style="margin:12px 0 0;font-size:12px;color:#DC2626;font-weight:600;">
+                      ⏱ Expire dans 10 minutes
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:#FEF3C7;border-left:4px solid #F59E0B;
+                               padding:14px 16px;border-radius:0 8px 8px 0;text-align:left;">
+                    <p style="margin:0;font-size:12px;color:#92400E;line-height:1.6;">
+                      ⚠️ <strong>Ne partagez jamais ce code.</strong> {bank_name} ne vous
+                      demandera jamais ce code par téléphone ou par e-mail.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- DIVIDER -->
+          <tr>
+            <td style="padding:0 40px;">
+              <div style="height:1px;background:#eeeeee;"></div>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:22px 40px;text-align:center;background:#fafafa;">
+              <p style="margin:0 0 5px;font-size:12px;color:#aaaaaa;">
+                Message automatique — ne pas répondre.
+              </p>
+              <p style="margin:0;font-size:12px;font-weight:700;color:{primary};">
+                &copy; {year} {bank_name} &mdash; Tous droits réservés
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
-    
-    email = EmailMultiAlternatives(subject=subject, body=f"Code: {otp_code}", from_email=f'{bank_name} <{settings.EMAIL_HOST_USER}>', to=[user.email])
-    email.attach_alternative(html, "text/html")
-    email.send(fail_silently=False)
 
+    plain = f'Code de vérification {bank_name}: {otp_code} (valable 10 min)'
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank_name} — Votre code de vérification',
+        body=plain,
+        from_email=f'{bank_name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email],
+    )
+    msg.attach_alternative(html, 'text/html')
+    msg.send(fail_silently=False)
+
+
+# ─────────────────────────────────────────────
+#  EMAIL 6 — Bienvenue
+# ─────────────────────────────────────────────
 
 def send_welcome_email(user, bank, temp_password):
-    """Email de bienvenue avec lien de connexion"""
-    # Récupérer le domaine depuis les settings
-    from django.conf import settings
+    """Email de bienvenue avec lien de connexion."""
     domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
-    login_url = f"https://{domain}/login/{bank.slug}/"
-    
-    subject = f"{bank.name} - Bienvenue sur votre espace client"
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f5f5;">
-<div style="max-width:600px;margin:20px auto;background:white;border-radius:8px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,{bank.primary_color} 0%,{bank.secondary_color} 100%);padding:28px;text-align:center;border-bottom:4px solid {bank.secondary_color};">
-<h1 style="color:white;margin:0;font-size:28px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">{bank.name}</h1>
-</div>
-<div style="background:#2e7d32;padding:15px;text-align:center;">
-<h1 style="color:white;margin:0;font-size:20px;">Bienvenue sur votre espace client</h1>
-</div>
-<div style="padding:25px;">
-<p style="font-size:15px;color:#333;">Bonjour <strong>{user.get_full_name() or user.username}</strong>,</p>
-<p style="font-size:14px;color:#666;line-height:1.6;">Votre compte {bank.name} a été créé avec succès!</p>
-<p style="font-size:14px;color:#666;margin:20px 0 10px 0;"><strong>Vos identifiants de connexion:</strong></p>
-<div style="background:#f8f9fa;border-left:4px solid {bank.primary_color};padding:15px;margin:15px 0;">
-<p style="margin:0 0 8px 0;"><strong>Nom d'utilisateur:</strong> {user.username}</p>
-<p style="margin:0;"><strong>Mot de passe:</strong> {temp_password}</p>
-</div>
-<p style="font-size:13px;color:#f57c00;background:#fff8e1;padding:12px;border-radius:6px;margin:15px 0;">⚠️ Changez ce mot de passe dès votre première connexion</p>
-<div style="text-align:center;margin:25px 0;">
-<a href="{login_url}" style="display:inline-block;background:linear-gradient(135deg,{bank.primary_color},{bank.secondary_color});color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Se connecter à {bank.name}</a>
-</div>
-<p style="font-size:12px;color:#999;background:#f0f7ff;padding:12px;border-left:3px solid #2196f3;border-radius:4px;margin-top:20px;">
-ℹ️ Conservez ce lien de connexion: <br><strong>{login_url}</strong>
-</p>
-</div>
-<div style="background:#f8f9fa;padding:15px;text-align:center;">
-<p style="font-size:11px;color:#999;">Ceci est un mail automatique merci de ne pas y répondre</p>
-<p style="font-size:12px;color:{bank.primary_color};font-weight:bold;margin:5px 0 0 0;">{bank.name} - Tous droits réservés</p>
-</div>
-</div>
-</body>
-</html>"""
-    
-    email = EmailMultiAlternatives(
-        subject=subject,
-        body=f"Bienvenue sur {bank.name}!\n\nUsername: {user.username}\nPassword: {temp_password}\n\nConnectez-vous: {login_url}",
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
-        to=[user.email]
+    login_url = f'https://{domain}/login/{bank.slug}/'
+    primary = bank.primary_color
+    bank_secondary = getattr(bank, 'secondary_color', primary)
+
+    rows = (
+        _row("Nom d'utilisateur", f'<strong>{user.username}</strong>',           False) +
+        _row('Mot de passe',      f'<code style="font-size:14px;">{temp_password}</code>', True) +
+        _row('Banque',            bank.name,                                     False) +
+        _row('Titulaire',         user.get_full_name() or user.username,         True)
     )
-    email.attach_alternative(html, "text/html")
-    email.send(fail_silently=True)
+
+    cta_block = f"""
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+      <tr>
+        <td align="center">
+          <a href="{login_url}"
+             style="display:inline-block;background:linear-gradient(135deg,{primary} 0%,{bank_secondary} 100%);
+                    color:#ffffff;padding:16px 40px;border-radius:10px;text-decoration:none;
+                    font-weight:700;font-size:15px;letter-spacing:0.3px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+            Se connecter à {bank.name}
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:16px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background:#EFF6FF;border-left:4px solid #3B82F6;
+                           padding:14px 16px;border-radius:0 8px 8px 0;">
+                <p style="margin:0;font-size:12px;color:#1E40AF;line-height:1.6;">
+                  ℹ️ Conservez ce lien de connexion :<br/>
+                  <strong>{login_url}</strong>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:14px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background:#FEF3C7;border-left:4px solid #F59E0B;
+                           padding:14px 16px;border-radius:0 8px 8px 0;">
+                <p style="margin:0;font-size:12px;color:#92400E;line-height:1.6;">
+                  ⚠️ <strong>Changez votre mot de passe</strong> dès votre première connexion.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>"""
+
+    html = _build_email_html(
+        bank=bank,
+        status_color='#16A34A',
+        status_label='Bienvenue sur votre espace client',
+        status_icon='🎉',
+        greeting_name=user.get_full_name() or user.username,
+        intro_text=(
+            f'Votre compte <strong>{bank.name}</strong> a été créé avec succès. '
+            f'Retrouvez ci-dessous vos identifiants de connexion. '
+            f'Nous vous recommandons de modifier votre mot de passe à la première connexion.'
+        ),
+        amount_display='',
+        primary_color=primary,
+        rows_html=rows,
+        extra_block=cta_block,
+    )
+
+    plain = (
+        f'Bienvenue sur {bank.name}!\n\n'
+        f'Nom d\'utilisateur: {user.username}\n'
+        f'Mot de passe: {temp_password}\n\n'
+        f'Connectez-vous: {login_url}'
+    )
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — Bienvenue sur votre espace client',
+        body=plain,
+        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        to=[user.email],
+    )
+    msg.attach_alternative(html, 'text/html')
+    msg.send(fail_silently=True)
