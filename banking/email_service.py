@@ -83,6 +83,25 @@ def _build_email_html(
     logo_html = _get_logo_html(bank)
     bank_secondary = getattr(bank, 'secondary_color', primary_color)
 
+    # Bloc montant construit en dehors du f-string (interdit d'utiliser \' dans une expression f-string Python <3.12)
+    if amount_display:
+        amount_label = "Montant de l\u2019op\u00e9ration"
+        amount_card_html = (
+            '<table width="100%" cellpadding="0" cellspacing="0" border="0"'
+            ' style="background:linear-gradient(135deg,#f8f9fa 0%,#eef0f3 100%);'
+            'border-radius:12px;border:1px solid #e2e5ea;margin-bottom:28px;">'
+            '<tr><td style="padding:28px;text-align:center;">'
+            '<p style="margin:0 0 6px;font-size:11px;color:#888888;'
+            'text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">'
+            + amount_label +
+            '</p>'
+            '<p style="margin:0;font-size:40px;font-weight:800;color:' + primary_color + ';letter-spacing:-1px;">'
+            + amount_display +
+            '</p></td></tr></table>'
+        )
+    else:
+        amount_card_html = ''
+
     return f"""<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -142,7 +161,7 @@ def _build_email_html(
               </p>
 
               <!-- Amount card (masqué si vide) -->
-              {'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#f8f9fa 0%,#eef0f3 100%);border-radius:12px;border:1px solid #e2e5ea;margin-bottom:28px;"><tr><td style="padding:28px;text-align:center;"><p style="margin:0 0 6px;font-size:11px;color:#888888;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Montant de l\'opération</p><p style="margin:0;font-size:40px;font-weight:800;color:' + primary_color + ';letter-spacing:-1px;">' + amount_display + '</p></td></tr></table>' if amount_display else ''}
+              {amount_card_html}
 
               <!-- Details table -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0"
