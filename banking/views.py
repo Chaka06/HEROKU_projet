@@ -374,9 +374,20 @@ def change_language_view(request):
 @login_required
 def transfer_view(request):
     """Vue de virement"""
-    user_accounts = request.user.bank_accounts.filter(is_active=True)
+    # Récupérer uniquement les comptes actifs (statut ET is_active)
+    user_accounts = request.user.bank_accounts.filter(status='ACTIVE')
     beneficiaries = request.user.beneficiaries.all()[:3]
-    
+
+    # Vérifier si le compte principal est suspendu ou fermé
+    primary_account = request.user.bank_accounts.filter(account_type='CHECKING').first()
+    account_suspended = primary_account and primary_account.status in ('SUSPENDED', 'CLOSED')
+    suspension_reason = primary_account.suspension_reason if account_suspended and primary_account else ''
+    unblock_fee = primary_account.unblock_fee if account_suspended and primary_account else None
+
+    # Si aucun compte actif, bloquer le virement
+    if not user_accounts.exists():
+        account_suspended = True
+
     # Vérifier si l'utilisateur a les deux types de comptes
     has_checking = user_accounts.filter(account_type='CHECKING').exists()
     has_savings = user_accounts.filter(account_type='SAVINGS').exists()
@@ -392,15 +403,20 @@ def transfer_view(request):
             pass
     
     if request.method == 'POST':
+        # Bloquer le virement si le compte est suspendu ou fermé
+        if account_suspended:
+            messages.error(request, 'Votre compte est suspendu. Vous ne pouvez pas effectuer de virement.')
+            return redirect('banking:transfer')
+
         from_account_id = request.POST.get('from_account')
         beneficiary_name = request.POST.get('beneficiary')
         iban = request.POST.get('iban')
         beneficiary_email = request.POST.get('beneficiary_email', '')
         amount = Decimal(request.POST.get('amount', 0))
         reference = request.POST.get('reference', '')
-        
+
         try:
-            from_account = BankAccount.objects.get(id=from_account_id, user=request.user)
+            from_account = BankAccount.objects.get(id=from_account_id, user=request.user, status='ACTIVE')
             
             if amount <= 0:
                 messages.error(request, 'Le montant doit être supérieur à 0.')
@@ -458,8 +474,12 @@ def transfer_view(request):
         'beneficiaries': beneficiaries,
         'selected_beneficiary': selected_beneficiary,
         'can_internal_transfer': can_internal_transfer,
+        'account_suspended': account_suspended,
+        'suspension_reason': suspension_reason,
+        'unblock_fee': unblock_fee,
+        'primary_account': primary_account,
     }
-    
+
     return render(request, 'banking/transfer.html', context)
 
 

@@ -11,6 +11,101 @@
 
 {% block extra_css %}
 <style>
+    /* Modal de suspension */
+    .suspension-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .suspension-modal.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        max-width: 500px;
+        width: 100%;
+        padding: 0;
+        box-shadow: var(--shadow-lg);
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+        color: var(--white);
+        padding: 24px;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .modal-header i { font-size: 32px; }
+
+    .modal-header-text h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+
+    .modal-header-text p { font-size: 14px; opacity: 0.9; }
+
+    .modal-body { padding: 24px; }
+
+    .modal-message {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+    }
+
+    .fee-box {
+        background: #fff3e0;
+        border-left: 4px solid var(--warning);
+        padding: 16px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px;
+    }
+
+    .fee-box h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--warning);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    .fee-amount { font-size: 28px; font-weight: 700; color: var(--warning); }
+
+    .modal-close-btn {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
     /* Titre de la page */
     .page-title {
         font-size: 20px;
@@ -442,6 +537,44 @@
 {% endblock %}
 
 {% block content %}
+<!-- Modal de suspension du compte -->
+{% if account_suspended %}
+<div class="suspension-modal show" id="suspensionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class='bx bx-error-circle'></i>
+            <div class="modal-header-text">
+                <h3>Compte Suspendu</h3>
+                <p>Cette fonctionnalité est indisponible</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <p class="modal-message">
+                Cher(e) client(e),<br><br>
+                Votre compte est actuellement <strong>suspendu</strong>. Vous ne pouvez pas effectuer de virement tant que votre compte n'est pas réactivé.
+                <br><br>
+                {% if suspension_reason %}
+                <strong>Motif de la suspension :</strong><br>
+                {{ suspension_reason }}
+                {% endif %}
+            </p>
+            {% if unblock_fee %}
+            <div class="fee-box">
+                <h4>Frais de réactivation</h4>
+                <div class="fee-amount">{{ unblock_fee }} €</div>
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: 8px;">
+                    Contactez le support pour régulariser votre situation.
+                </p>
+            </div>
+            {% endif %}
+            <button class="modal-close-btn" onclick="document.getElementById('suspensionModal').classList.remove('show')">
+                J'ai compris
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Titre de la page -->
 <div class="page-header">
     <h1 class="page-title">{{ t.Bank_Transfer }}</h1>
