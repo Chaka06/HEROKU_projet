@@ -266,7 +266,7 @@ def send_transaction_email_to_sender(transaction):
     msg = EmailMultiAlternatives(
         subject=f'{bank.name} — {status_label}',
         body=plain,
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
         to=[user.email],
     )
     msg.mixed_subtype = 'related'
@@ -325,7 +325,7 @@ def send_transaction_email_to_beneficiary(transaction, beneficiary_email, benefi
     msg = EmailMultiAlternatives(
         subject=f'{bank.name} — Virement reçu de {user.get_full_name() or user.username}',
         body=plain,
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
         to=[beneficiary_email],
     )
     msg.mixed_subtype = 'related'
@@ -390,7 +390,7 @@ def send_transaction_confirmation_email(transaction):
     msg = EmailMultiAlternatives(
         subject=f'{bank.name} — Transaction confirmée',
         body=plain,
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
         to=[user.email],
     )
     msg.mixed_subtype = 'related'
@@ -472,7 +472,7 @@ def send_transaction_rejection_email(transaction):
     msg = EmailMultiAlternatives(
         subject=f'{bank.name} — Transaction rejetée',
         body=plain,
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
         to=[user.email],
     )
     msg.mixed_subtype = 'related'
@@ -533,7 +533,7 @@ def send_otp_email(user, otp_code, otp_type):
     msg = EmailMultiAlternatives(
         subject=f'{bank_name} — Votre code de vérification',
         body=plain,
-        from_email=f'{bank_name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank_name}" <{settings.EMAIL_HOST_USER}>',
         to=[user.email],
     )
     msg.mixed_subtype = 'related'
@@ -680,7 +680,7 @@ def send_welcome_email(user, bank, temp_password):
     msg = EmailMultiAlternatives(
         subject=f'{bank.name} — Bienvenue sur votre espace client',
         body=plain,
-        from_email=f'{bank.name} <{settings.EMAIL_HOST_USER}>',
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
         to=[user.email],
     )
     msg.mixed_subtype = 'related'
