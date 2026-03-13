@@ -703,4 +703,4 @@ def send_welcome_email(user, bank, temp_password):
         logo_tag=logo_tag,
     )
     msg.attach_alternative(html, 'text/html')
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)

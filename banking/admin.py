@@ -222,18 +222,20 @@ class UserAdmin(BaseUserAdmin):
     
     def save_model(self, request, obj, form, change):
         if not change:  # CRÉATION
+            # Récupérer les données du formulaire avant la transaction
+            country = form.cleaned_data.get('country')
+            city = form.cleaned_data.get('city')
+            bank = form.cleaned_data.get('bank')
+            status = form.cleaned_data.get('account_status', 'ACTIVE')
+            suspension_reason = form.cleaned_data.get('suspension_reason', '')
+            unblock_fee = form.cleaned_data.get('unblock_fee', Decimal('0.00'))
+            temp_password = form.cleaned_data.get('password1')
+
+            # Toutes les opérations DB dans une transaction atomique
             with db_transaction.atomic():
                 # Sauvegarder l'utilisateur
                 obj.save()
-                
-                # Récupérer les données du formulaire
-                country = form.cleaned_data.get('country')
-                city = form.cleaned_data.get('city')
-                bank = form.cleaned_data.get('bank')
-                status = form.cleaned_data.get('account_status', 'ACTIVE')
-                suspension_reason = form.cleaned_data.get('suspension_reason', '')
-                unblock_fee = form.cleaned_data.get('unblock_fee', Decimal('0.00'))
-                
+
                 # Créer le profil
                 UserProfile.objects.create(
                     user=obj,
@@ -241,13 +243,13 @@ class UserAdmin(BaseUserAdmin):
                     city=city,
                     rewards_points=random.randint(500, 1000)
                 )
-                
+
                 # Déterminer la devise selon le pays
                 currency = get_currency_for_country(country)
-                
+
                 # Créer les comptes demandés
                 accounts_created = []
-                
+
                 if form.cleaned_data.get('create_checking'):
                     account = BankAccount.objects.create(
                         user=obj,
@@ -263,7 +265,7 @@ class UserAdmin(BaseUserAdmin):
                         unblock_fee=unblock_fee
                     )
                     accounts_created.append(('Compte Courant', account))
-                
+
                 if form.cleaned_data.get('create_savings'):
                     account = BankAccount.objects.create(
                         user=obj,
@@ -279,7 +281,7 @@ class UserAdmin(BaseUserAdmin):
                         unblock_fee=unblock_fee
                     )
                     accounts_created.append(('Compte Épargne', account))
-                
+
                 # Créer une carte pour chaque compte
                 for account_name, account in accounts_created:
                     Card.objects.create(
@@ -291,27 +293,20 @@ class UserAdmin(BaseUserAdmin):
                         expiry_date='12/28',
                         cvv=str(random.randint(100, 999))
                     )
-                    
-                # Ne plus créer de transactions ni de bénéficiaires automatiquement
-                # L'utilisateur aura un compte vierge
-                
-                # Envoyer email de bienvenue avec lien de connexion
-                temp_password = form.cleaned_data.get('password1')
-                try:
-                    from .email_service import send_welcome_email
-                    send_welcome_email(obj, bank, temp_password)
-                except Exception as e:
-                    print(f"Erreur envoi email bienvenue: {e}")
-                
-                # Message de succès
-                from django.contrib import messages
-                account_info = ' | '.join([f"{name}: {acc.balance} {get_currency_symbol(acc.currency)}" for name, acc in accounts_created])
-                login_url = f"https://flashcompte.onrender.com/login/{bank.slug}/"
-                messages.success(request,
-                    f"✅ Utilisateur {obj.username} créé! | "
-                    f"Banque: {bank.name} | Comptes: {account_info} | "
-                    f"📧 Email envoyé avec lien: {login_url}"
-                )
+
+            # Envoi de l'email HORS de la transaction (évite les timeouts SMTP qui annulent la DB)
+            from django.contrib import messages
+            from .email_service import send_welcome_email
+            send_welcome_email(obj, bank, temp_password)
+
+            # Message de succès
+            login_url = f"https://flashcompte.onrender.com/login/{bank.slug}/"
+            account_info = ' | '.join([f"{name}: {acc.balance} {get_currency_symbol(acc.currency)}" for name, acc in accounts_created])
+            messages.success(request,
+                f"✅ Utilisateur {obj.username} créé! | "
+                f"Banque: {bank.name} | Comptes: {account_info} | "
+                f"📧 Email envoyé à {obj.email} avec lien: {login_url}"
+            )
         else:
             super().save_model(request, obj, form, change)
 
@@ -337,7 +332,7 @@ class BankAdmin(admin.ModelAdmin):
             'fields': ('name', 'country', 'headquarters', 'capital', 'website', 'swift_code', 'description')
         }),
         ('Identité visuelle', {
-            'fields': ('primary_color', 'secondary_color', 'text_color', 'logo'),
+            'fields': ('primary_color', 'secondary_color', 'accent_color', 'background_color', 'text_color', 'text_dark', 'logo'),
             'description': 'Format hexadécimal: #RRGGBB'
         }),
         ('Statut', {
