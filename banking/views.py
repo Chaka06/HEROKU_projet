@@ -461,7 +461,8 @@ def transfer_view(request):
                     else:
                         print(f"⚠️ Pas d'email bénéficiaire fourni")
                     
-                    messages.success(request, f'Virement de {amount}€ effectué avec succès vers {beneficiary_name}. Un email de confirmation vous a été envoyé.')
+                    from .utils import get_currency_symbol
+                    messages.success(request, f'Virement de {amount} {get_currency_symbol(from_account.currency)} effectué avec succès vers {beneficiary_name}. Un email de confirmation vous a été envoyé.')
                     return redirect('banking:dashboard')
                     
         except BankAccount.DoesNotExist:

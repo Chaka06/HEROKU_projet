@@ -213,7 +213,7 @@ class Transaction(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     
     def __str__(self):
-        return f"{self.get_transaction_type_display()} - {self.amount}€ - {self.created_at.strftime('%d/%m/%Y')}"
+        return f"{self.get_transaction_type_display()} - {self.amount} {self.account.currency} - {self.created_at.strftime('%d/%m/%Y')}"
     
     def is_positive(self):
         """Retourne True si la transaction augmente le solde"""

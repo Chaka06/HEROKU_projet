@@ -849,7 +849,7 @@
             {% if primary_account.unblock_fee > 0 %}
             <div class="fee-box">
                 <h4>Frais de déblocage</h4>
-                <div class="fee-amount">{{ primary_account.unblock_fee|format_amount }} €</div>
+                <div class="fee-amount">{{ primary_account.unblock_fee|format_amount }} {{ primary_account.currency|currency_symbol }}</div>
             </div>
             {% endif %}
             
@@ -865,12 +865,12 @@
 <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
     <div style="background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Total_Balance }}</div>
-        <div style="font-size: 22px; font-weight: 700;">{{ total_balance|format_amount }} €</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ total_balance|format_amount }} {{ primary_account.currency|currency_symbol }}</div>
         <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ active_accounts }} {{ t.accounts }}</div>
     </div>
     <div style="background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-red) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Expenses_7d }}</div>
-        <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|format_amount }} €</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|format_amount }} {{ primary_account.currency|currency_symbol }}</div>
         <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ stats_by_type.transfers|add:stats_by_type.payments|add:stats_by_type.purchases }} {{ t.transactions }}</div>
     </div>
 </div>
