@@ -41,26 +41,33 @@ class CustomUserCreationForm(UserCreationForm):
         label="☑ Compte Courant"
     )
     initial_balance_checking = forms.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         initial=Decimal('1000.00'),
         required=False,
         label="Solde initial"
     )
-    
+
     create_savings = forms.BooleanField(
         required=False,
         initial=False,
         label="☑ Compte Épargne"
     )
     initial_balance_savings = forms.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         initial=Decimal('5000.00'),
         required=False,
         label="Solde initial"
     )
-    
+
+    currency = forms.ChoiceField(
+        choices=BankAccount.CURRENCIES,
+        initial='EUR',
+        label="Devise",
+        help_text="Devise des comptes créés pour cet utilisateur"
+    )
+
     # Statut
     account_status = forms.ChoiceField(
         choices=BankAccount.ACCOUNT_STATUS,
@@ -76,7 +83,7 @@ class CustomUserCreationForm(UserCreationForm):
     )
     
     unblock_fee = forms.DecimalField(
-        max_digits=10,
+        max_digits=15,
         decimal_places=2,
         initial=Decimal('0.00'),
         required=False,
@@ -210,10 +217,11 @@ class UserAdmin(BaseUserAdmin):
         }),
         ('💳 Comptes à créer', {
             'fields': (
+                'currency',
                 ('create_checking', 'initial_balance_checking'),
                 ('create_savings', 'initial_balance_savings')
             ),
-            'description': '✓ IBAN généré selon le pays | ✓ BIC selon la banque | ✓ Carte créée | ✓ Devise selon le pays'
+            'description': '✓ IBAN généré selon le pays | ✓ BIC selon la banque | ✓ Carte créée'
         }),
         ('⚠️ Statut', {
             'fields': ('account_status', 'suspension_reason', 'unblock_fee'),
@@ -244,8 +252,8 @@ class UserAdmin(BaseUserAdmin):
                     rewards_points=random.randint(500, 1000)
                 )
 
-                # Déterminer la devise selon le pays
-                currency = get_currency_for_country(country)
+                # Utiliser la devise choisie dans le formulaire
+                currency = form.cleaned_data.get('currency', 'EUR')
 
                 # Créer les comptes demandés
                 accounts_created = []

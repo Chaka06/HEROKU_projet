@@ -801,7 +801,7 @@
     
     <!-- Solde principal au centre -->
     <div class="card-balance-main">
-        <div class="card-balance-amount">{{ primary_account.balance|floatformat:2 }} {{ primary_account.currency|currency_symbol }}</div>
+        <div class="card-balance-amount">{{ primary_account.balance|format_amount }} {{ primary_account.currency|currency_symbol }}</div>
     </div>
     
     <!-- Nom du titulaire et numéro de carte -->
@@ -849,7 +849,7 @@
             {% if primary_account.unblock_fee > 0 %}
             <div class="fee-box">
                 <h4>Frais de déblocage</h4>
-                <div class="fee-amount">{{ primary_account.unblock_fee|floatformat:2 }} €</div>
+                <div class="fee-amount">{{ primary_account.unblock_fee|format_amount }} €</div>
             </div>
             {% endif %}
             
@@ -865,12 +865,12 @@
 <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
     <div style="background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Total_Balance }}</div>
-        <div style="font-size: 22px; font-weight: 700;">{{ total_balance|floatformat:2 }} €</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ total_balance|format_amount }} €</div>
         <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ active_accounts }} {{ t.accounts }}</div>
     </div>
     <div style="background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-red) 100%); border-radius: 12px; padding: 16px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">{{ t.Expenses_7d }}</div>
-        <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|floatformat:2 }} €</div>
+        <div style="font-size: 22px; font-weight: 700;">{{ expenses_7d|format_amount }} €</div>
         <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">{{ stats_by_type.transfers|add:stats_by_type.payments|add:stats_by_type.purchases }} {{ t.transactions }}</div>
     </div>
 </div>
@@ -932,7 +932,7 @@
             <div class="account-display-info">
                 <div class="account-display-type">{{ account.get_account_type_display|translate_account_type:user_lang }}</div>
                 <div class="account-display-number">{{ account.get_masked_number }}</div>
-                <div class="account-display-balance">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</div>
+                <div class="account-display-balance">{{ account.balance|format_amount }} {{ account.currency|currency_symbol }}</div>
             </div>
         </div>
         {% endfor %}
@@ -1004,9 +1004,9 @@
             </div>
             <div class="transaction-amount-wrapper">
                 <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">
-                    {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}
+                    {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|format_amount }} {{ transaction.account.currency|currency_symbol }}
                 </div>
-                <div class="transaction-balance">{{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
+                <div class="transaction-balance">{{ transaction.balance_after|format_amount }} {{ transaction.account.currency|currency_symbol }}</div>
             </div>
             <i class='bx bx-chevron-right transaction-arrow'></i>
         </div>

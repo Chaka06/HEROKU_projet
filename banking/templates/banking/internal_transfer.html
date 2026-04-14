@@ -275,7 +275,7 @@
                 <div class="account-details">
                     <div class="account-type">{{ account.get_account_type_display }}</div>
                     <div class="account-number">{{ account.get_masked_number }}</div>
-                    <div class="account-balance">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</div>
+                    <div class="account-balance">{{ account.balance|format_amount }} {{ account.currency|currency_symbol }}</div>
                 </div>
             </div>
             {% endfor %}
@@ -303,7 +303,7 @@
                 <div class="account-details">
                     <div class="account-type">{{ account.get_account_type_display }}</div>
                     <div class="account-number">{{ account.get_masked_number }}</div>
-                    <div class="account-balance">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</div>
+                    <div class="account-balance">{{ account.balance|format_amount }} {{ account.currency|currency_symbol }}</div>
                 </div>
             </div>
             {% endfor %}

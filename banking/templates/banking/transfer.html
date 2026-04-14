@@ -1,4 +1,5 @@
 {% extends 'banking/base.html' %}
+{% load banking_tags %}
 
 {% block title %}Virement Bancaire - {{ bank_name|default:"Banque" }}{% endblock %}
 
@@ -643,7 +644,7 @@
                 <div class="account-details">
                     <div class="account-type">{{ account.get_account_type_display }}</div>
                     <div class="account-number">{{ account.get_masked_number }}</div>
-                    <div class="account-balance">{{ account.balance|floatformat:2 }} €</div>
+                    <div class="account-balance">{{ account.balance|format_amount }} €</div>
                 </div>
             </div>
             {% endfor %}

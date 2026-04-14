@@ -316,9 +316,9 @@
         </div>
         <div class="transaction-amount-wrapper">
             <div class="transaction-amount {% if transaction.is_positive %}positive{% else %}negative{% endif %}">
-                {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}
+                {% if transaction.is_positive %}+{% else %}-{% endif %}{{ transaction.amount|format_amount }} {{ transaction.account.currency|currency_symbol }}
             </div>
-            <div class="transaction-balance">{{ t.Balance }}: {{ transaction.balance_after|floatformat:2 }} {{ transaction.account.currency|currency_symbol }}</div>
+            <div class="transaction-balance">{{ t.Balance }}: {{ transaction.balance_after|format_amount }} {{ transaction.account.currency|currency_symbol }}</div>
         </div>
         <i class='bx bx-chevron-right transaction-arrow'></i>
     </a>

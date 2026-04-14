@@ -14,6 +14,16 @@ def format_date_fr(date):
     return date.strftime("%d/%m/%Y")
 
 
+def format_amount_fr(value):
+    """Formate un montant en format français : 10.000.000.000,00"""
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    formatted = f"{value:,.2f}"
+    return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+
 def get_bank_logo_image(bank):
     """Retourne une image du logo de la banque"""
     if bank.logo:
@@ -155,7 +165,7 @@ def generate_transaction_receipt_pdf(transaction):
     elements.append(details_header)
     
     details_data = [
-        ["Montant", f"{transaction.amount} {currency}"],
+        ["Montant", f"{format_amount_fr(transaction.amount)} {currency}"],
         ["Type", transaction.get_transaction_type_display()],
         ["Motif", transaction.description or "Non spécifié"],
         ["Référence", transaction.reference or "-"],
@@ -195,7 +205,7 @@ def generate_transaction_receipt_pdf(transaction):
         if transaction.rejection_fee > 0:
             elements.append(Spacer(1, 8))
             fee_style = ParagraphStyle('Fee', fontSize=9, textColor=colors.HexColor('#c62828'), alignment=TA_CENTER, leading=14)
-            fee_text = f"Frais de rejet: {transaction.rejection_fee} {currency}"
+            fee_text = f"Frais de rejet: {format_amount_fr(transaction.rejection_fee)} {currency}"
             elements.append(Paragraph(fee_text, fee_style))
     
     elements.append(Spacer(1, 15))

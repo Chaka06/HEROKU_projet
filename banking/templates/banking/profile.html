@@ -169,7 +169,7 @@
     {% for account in user.bank_accounts.all %}
     <div class="info-row">
         <span class="info-label">{{ account.get_account_type_display|translate_account_type:user_lang }}</span>
-        <span class="info-value">{{ account.balance|floatformat:2 }} {{ account.currency|currency_symbol }}</span>
+        <span class="info-value">{{ account.balance|format_amount }} {{ account.currency|currency_symbol }}</span>
     </div>
     <div class="info-row">
         <span class="info-label">IBAN</span>

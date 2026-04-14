@@ -3,6 +3,19 @@ from banking.utils import get_currency_symbol
 
 register = template.Library()
 
+
+@register.filter
+def format_amount(value):
+    """Formate un montant en format français : 10.000.000.000,00"""
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return value
+    formatted = f"{value:,.2f}"          # e.g. "10,000,000,000.00"
+    formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+    return formatted
+
+
 @register.filter
 def currency_symbol(currency_code):
     """Retourne le symbole de la devise"""

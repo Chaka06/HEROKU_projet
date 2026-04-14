@@ -110,17 +110,17 @@ class BankAccount(models.Model):
     account_number = models.CharField(max_length=20, unique=True)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES, default='CHECKING')
     currency = models.CharField(max_length=3, choices=CURRENCIES, default='EUR')
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     iban = models.CharField(max_length=34, unique=True)
     bic = models.CharField(max_length=11, default='MABANFRPPXXX')
-    
+
     # Statut du compte
     status = models.CharField(max_length=20, choices=ACCOUNT_STATUS, default='ACTIVE')
     suspension_reason = models.TextField(blank=True, help_text="Motif de la suspension du compte")
-    unblock_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'), help_text="Frais de déblocage en €")
-    
+    unblock_fee = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), help_text="Frais de déblocage en €")
+
     is_active = models.BooleanField(default=True)
-    overdraft_limit = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    overdraft_limit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -196,8 +196,8 @@ class Transaction(models.Model):
     
     account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='transactions')
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=15, decimal_places=2)
     description = models.CharField(max_length=200)
     reference = models.CharField(max_length=100, blank=True)
     recipient = models.CharField(max_length=200, blank=True)
@@ -206,7 +206,7 @@ class Transaction(models.Model):
     
     # Informations de rejet
     rejection_reason = models.TextField(blank=True, help_text="Motif du rejet de la transaction")
-    rejection_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'), help_text="Frais de rejet en devise du compte")
+    rejection_fee = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), help_text="Frais de rejet en devise du compte")
     rejected_at = models.DateTimeField(null=True, blank=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     
