@@ -154,18 +154,18 @@
             <input type="radio" name="account_status" id="st-active" value="ACTIVE"
                    {% if post_data.account_status != 'SUSPENDED' %}checked{% endif %}>
             <label for="st-active">
-              <div class="rc-title">Compte actif</div>
+              <div class="rc-title">Compte flash actif</div>
               <div class="rc-price">{{ fee_active|floatformat:0 }} {{ fee_currency }}</div>
-              <div class="rc-desc">Le client peut se connecter et utiliser son compte immédiatement.</div>
+              <div class="rc-desc">Avec option de virement.</div>
             </label>
           </div>
           <div class="radio-card">
             <input type="radio" name="account_status" id="st-suspended" value="SUSPENDED"
                    {% if post_data.account_status == 'SUSPENDED' %}checked{% endif %}>
             <label for="st-suspended">
-              <div class="rc-title">Compte suspendu</div>
+              <div class="rc-title">Compte flash bloqué</div>
               <div class="rc-price suspended">{{ fee_suspended|floatformat:0 }} {{ fee_currency }}</div>
-              <div class="rc-desc">Compte créé mais bloqué. L'admin pourra l'activer ultérieurement.</div>
+              <div class="rc-desc">Avec frais de déblocage.</div>
             </label>
           </div>
         </div>
