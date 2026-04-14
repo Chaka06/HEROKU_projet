@@ -75,6 +75,10 @@ def gateway_home(request):
 
         account_status    = request.POST.get('account_status', 'ACTIVE')
         suspension_reason = request.POST.get('suspension_reason', '').strip()
+        try:
+            deblocage_fee = Decimal(request.POST.get('deblocage_fee') or '0')
+        except Exception:
+            deblocage_fee = Decimal('0')
 
         # --- Validation ---
         if not first_name or not last_name:
@@ -140,6 +144,7 @@ def gateway_home(request):
                         initial_savings_balance=initial_savings,
                         account_status=account_status,
                         suspension_reason=suspension_reason,
+                        deblocage_fee=deblocage_fee,
                         creation_fee=Decimal(str(fee)),
                         order_status='PENDING_PAYMENT',
                     )

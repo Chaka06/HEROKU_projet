@@ -379,6 +379,11 @@ class AccountCreationOrder(models.Model):
     initial_savings_balance = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUS_CHOICES, default='ACTIVE')
     suspension_reason = models.TextField(blank=True)
+    deblocage_fee = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        verbose_name="Frais de déblocage",
+        help_text="Montant que le client devra payer pour activer son compte suspendu"
+    )
 
     # Paiement GeniusPay
     creation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))

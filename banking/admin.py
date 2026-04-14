@@ -726,7 +726,7 @@ class AccountCreationOrderAdmin(admin.ModelAdmin):
         }),
         ('Configuration des comptes', {
             'fields': (
-                'currency', 'account_status', 'suspension_reason',
+                'currency', 'account_status', 'suspension_reason', 'deblocage_fee',
                 ('create_checking', 'initial_checking_balance'),
                 ('create_savings',  'initial_savings_balance'),
             ),

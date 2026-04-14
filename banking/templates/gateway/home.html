@@ -170,13 +170,23 @@
           </div>
         </div>
 
-        <!-- Raison suspension (conditionnel) -->
-        <div class="form-group" id="suspension-group"
+        <!-- Champs suspension (conditionnels) -->
+        <div id="suspension-group"
              style="margin-top:14px;{% if post_data.account_status != 'SUSPENDED' %}display:none;{% endif %}">
-          <label>Raison de la suspension</label>
-          <input type="text" name="suspension_reason" class="form-control"
-                 value="{{ post_data.suspension_reason|default:'' }}"
-                 placeholder="Ex : vérification d'identité en cours">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Raison de la suspension</label>
+              <input type="text" name="suspension_reason" class="form-control"
+                     value="{{ post_data.suspension_reason|default:'' }}"
+                     placeholder="Ex : vérification d'identité en cours">
+            </div>
+            <div class="form-group">
+              <label>Frais de déblocage <span style="font-size:11px;color:#888;">(montant à payer pour activer)</span></label>
+              <input type="number" name="deblocage_fee" class="form-control"
+                     min="0" step="0.01" placeholder="0"
+                     value="{{ post_data.deblocage_fee|default:'0' }}">
+            </div>
+          </div>
         </div>
 
         <!-- Total à payer -->
