@@ -14,11 +14,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='bank',
-            name='slug',
-            field=models.SlugField(blank=True, help_text='URL de la page de login (généré automatiquement)', max_length=200, unique=True),
-        ),
         migrations.CreateModel(
             name='AccountCreationOrder',
             fields=[
