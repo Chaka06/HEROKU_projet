@@ -448,7 +448,7 @@ def gateway_order_detail(request, order_id):
     login_url = None
     if order.order_status == 'COMPLETED':
         site_url  = settings.SITE_URL.rstrip('/')
-        login_url = f"{site_url}/login/"
+        login_url = f"{site_url}/login/{order.bank.slug}/"
     return render(request, 'gateway/order_detail.html', {
         'order':     order,
         'login_url': login_url,
