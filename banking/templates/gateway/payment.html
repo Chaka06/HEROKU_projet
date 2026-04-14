@@ -69,7 +69,7 @@
       <div class="alert alert-info" style="margin-bottom:20px;">
         <i class='bx bx-info-circle' style="font-size:18px;flex-shrink:0;"></i>
         <div>
-          Paiement sécurisé via <strong>GeniusPay</strong> — Wave, Orange Money, MTN MoMo, Moov, carte bancaire.
+          Paiement sécurisé — Wave, Orange Money, MTN MoMo, Moov, carte bancaire.
           Le lien expire dans <strong>24 heures</strong>.
         </div>
       </div>
@@ -89,7 +89,7 @@
       <a href="{{ order.checkout_url }}" class="btn btn-primary btn-lg btn-block"
          onclick="document.getElementById('gw-loading').classList.add('show')">
         <i class='bx bx-lock-alt'></i>
-        Payer {{ order.creation_fee|floatformat:0 }} {{ fee_currency }} via GeniusPay
+        Payer {{ order.creation_fee|floatformat:0 }} {{ fee_currency }}
       </a>
       {% else %}
       <div class="alert alert-danger" style="margin-bottom:16px;">
