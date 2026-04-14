@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Charger le fichier .env (développement local)
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -178,3 +182,22 @@ EMAIL_HOST_USER = 'support@virement.net'
 EMAIL_HOST_PASSWORD = 'Ch@coul@melo728'
 DEFAULT_FROM_EMAIL = 'BNP Paribas <support@virement.net>'
 SERVER_EMAIL = 'support@virement.net'
+
+# ─────────────────────────────────────────────
+# GeniusPay — Agrégateur de paiement
+# ─────────────────────────────────────────────
+GENIUSPAY_API_KEY = os.environ.get('GENIUSPAY_API_KEY', '')
+GENIUSPAY_API_SECRET = os.environ.get('GENIUSPAY_API_SECRET', '')
+GENIUSPAY_WEBHOOK_SECRET = os.environ.get('GENIUSPAY_WEBHOOK_SECRET', '')
+GENIUSPAY_ENV = os.environ.get('GENIUSPAY_ENV', 'sandbox')
+GENIUSPAY_BASE_URL = 'https://pay.genius.ci/api/v1/merchant'
+
+# URL du site (utilisée dans les success_url / error_url envoyés à GeniusPay)
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+
+# ─────────────────────────────────────────────
+# Portail Agent — Frais de création de compte
+# ─────────────────────────────────────────────
+AGENT_FEE_ACTIVE = 45000      # FCFA — compte créé avec statut ACTIVE
+AGENT_FEE_SUSPENDED = 35000   # FCFA — compte créé avec statut SUSPENDED
+AGENT_FEE_CURRENCY = 'XOF'

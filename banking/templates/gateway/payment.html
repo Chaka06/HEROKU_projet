@@ -1,0 +1,115 @@
+{% extends 'gateway/base.html' %}
+{% block title %}Paiement — Commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="gw-container" style="max-width:560px;">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step done"><div class="num"><i class='bx bx-check'></i></div> Vos informations</div>
+    <div class="step-sep done"></div>
+    <div class="step active"><div class="num">2</div> Paiement</div>
+    <div class="step-sep"></div>
+    <div class="step"><div class="num">3</div> Confirmation</div>
+  </div>
+
+  {% if order.order_status == 'COMPLETED' %}
+  <div class="alert alert-success">
+    <i class='bx bx-check-circle' style="font-size:20px;flex-shrink:0;"></i>
+    <div>
+      Cette commande a déjà été traitée avec succès.
+      <a href="{% url 'gateway:order_detail' order.id %}" style="font-weight:700;">Voir le détail</a>
+    </div>
+  </div>
+  {% else %}
+
+  <div class="card">
+    <div class="card-header">
+      <h2><i class='bx bx-receipt' style="color:#4361ee;margin-right:6px;"></i> Récapitulatif</h2>
+      <span style="font-family:monospace;font-size:12px;color:#999;">#{{ order.id }}</span>
+    </div>
+    <div class="card-body">
+
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0;width:45%;">Bénéficiaire</td>
+          <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-weight:700;">{{ order.first_name }} {{ order.last_name }}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0;">Email</td>
+          <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;">{{ order.email }}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0;">Banque</td>
+          <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-weight:600;">{{ order.bank.name }}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0;">Comptes</td>
+          <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;">
+            {% if order.create_checking %}<span class="badge badge-info">Courant</span> {% endif %}
+            {% if order.create_savings %}<span class="badge badge-secondary">Épargne</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0;">Statut</td>
+          <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;">
+            {% if order.account_status == 'ACTIVE' %}
+              <span class="badge badge-success">Actif</span>
+            {% else %}
+              <span class="badge badge-warning">Suspendu</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0;color:#888;font-weight:600;">Devise</td>
+          <td style="padding:9px 0;">{{ order.currency }}</td>
+        </tr>
+      </table>
+
+      <div class="alert alert-info" style="margin-bottom:20px;">
+        <i class='bx bx-info-circle' style="font-size:18px;flex-shrink:0;"></i>
+        <div>
+          Paiement sécurisé via <strong>GeniusPay</strong> — Wave, Orange Money, MTN MoMo, Moov, carte bancaire.
+          Le lien expire dans <strong>24 heures</strong>.
+        </div>
+      </div>
+
+      <!-- Frais -->
+      <div class="fee-box" style="margin-bottom:24px;">
+        <div>
+          <div class="fee-label">Total à payer</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">
+            Compte {% if order.account_status == 'ACTIVE' %}actif{% else %}suspendu{% endif %}
+          </div>
+        </div>
+        <div class="fee-amount">{{ order.creation_fee|floatformat:0 }} {{ fee_currency }}</div>
+      </div>
+
+      {% if order.checkout_url %}
+      <a href="{{ order.checkout_url }}" class="btn btn-primary btn-lg btn-block"
+         onclick="document.getElementById('gw-loading').classList.add('show')">
+        <i class='bx bx-lock-alt'></i>
+        Payer {{ order.creation_fee|floatformat:0 }} {{ fee_currency }} via GeniusPay
+      </a>
+      {% else %}
+      <div class="alert alert-danger" style="margin-bottom:16px;">
+        <i class='bx bx-error' style="font-size:18px;flex-shrink:0;"></i>
+        <div>Lien de paiement non disponible.</div>
+      </div>
+      <a href="{% url 'gateway:payment_retry' order.id %}" class="btn btn-outline btn-block">
+        <i class='bx bx-refresh'></i> Générer un nouveau lien
+      </a>
+      {% endif %}
+
+      <div style="text-align:center;margin-top:14px;">
+        <a href="{% url 'gateway:home' %}" style="color:#999;font-size:13px;text-decoration:none;">
+          ← Recommencer
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

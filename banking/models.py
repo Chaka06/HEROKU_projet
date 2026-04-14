@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
+import random
+import string
 
 
 class Bank(models.Model):
@@ -324,6 +326,81 @@ class DocumentPDF(models.Model):
     class Meta:
         verbose_name = "Document PDF"
         verbose_name_plural = "Documents PDF"
+        ordering = ['-created_at']
+
+
+class AccountCreationOrder(models.Model):
+    """
+    Commande de création de compte via le portail public /gateway/.
+    N'importe qui peut remplir le formulaire, payer et recevoir ses identifiants par email.
+    """
+
+    PAYMENT_STATUS = [
+        ('PENDING', 'En attente'),
+        ('PAID', 'Payé'),
+        ('FAILED', 'Échoué'),
+        ('EXPIRED', 'Expiré'),
+    ]
+
+    ORDER_STATUS = [
+        ('PENDING_PAYMENT', 'En attente de paiement'),
+        ('PROCESSING', 'En cours de traitement'),
+        ('COMPLETED', 'Terminé'),
+        ('FAILED', 'Échoué'),
+    ]
+
+    ACCOUNT_STATUS_CHOICES = [
+        ('ACTIVE', 'Actif — 45 000 FCFA'),
+        ('SUSPENDED', 'Suspendu — 35 000 FCFA'),
+    ]
+
+    # Banque choisie par le client
+    bank = models.ForeignKey('Bank', on_delete=models.PROTECT, related_name='creation_orders')
+
+    # Informations du client à créer
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, default='France')
+
+    # Credentials temporaires (effacés après envoi de l'email)
+    username = models.CharField(max_length=150, blank=True)
+    temp_password = models.CharField(max_length=50, blank=True)
+
+    # Configuration des comptes
+    currency = models.CharField(max_length=3, default='EUR')
+    create_checking = models.BooleanField(default=True)
+    initial_checking_balance = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
+    create_savings = models.BooleanField(default=False)
+    initial_savings_balance = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
+    account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUS_CHOICES, default='ACTIVE')
+    suspension_reason = models.TextField(blank=True)
+
+    # Paiement GeniusPay
+    creation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='PENDING')
+    geniuspay_reference = models.CharField(max_length=100, blank=True)
+    geniuspay_transaction_id = models.IntegerField(null=True, blank=True)
+    checkout_url = models.URLField(max_length=600, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    # Suivi
+    order_status = models.CharField(max_length=20, choices=ORDER_STATUS, default='PENDING_PAYMENT')
+    created_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='creation_order')
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"#{self.id} — {self.first_name} {self.last_name} ({self.get_order_status_display()})"
+
+    class Meta:
+        verbose_name = "Commande de création de compte"
+        verbose_name_plural = "Commandes de création de compte"
         ordering = ['-created_at']
 
 

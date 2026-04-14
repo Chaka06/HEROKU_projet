@@ -6,7 +6,7 @@ from django import forms
 from django.db import transaction as db_transaction
 from decimal import Decimal
 import random
-from .models import Bank, UserProfile, BankAccount, Card, Transaction, Beneficiary, Notification, SupportMessage, DocumentPDF
+from .models import Bank, UserProfile, BankAccount, Card, Transaction, Beneficiary, Notification, SupportMessage, DocumentPDF, AccountCreationOrder
 from .utils import generate_account_number, generate_iban, generate_card_number, get_currency_for_country, get_currency_symbol
 
 
@@ -679,6 +679,68 @@ class SupportMessageAdmin(admin.ModelAdmin):
         if not change and obj.sender_is_staff:
             from django.contrib import messages as django_messages
             django_messages.success(request, f"✅ Réponse envoyée à {obj.user.username}")
+
+
+# ─────────────────────────────────────────────
+#  Admin — AccountCreationOrder
+# ─────────────────────────────────────────────
+
+@admin.register(AccountCreationOrder)
+class AccountCreationOrderAdmin(admin.ModelAdmin):
+    list_display  = [
+        'id', 'get_client_name', 'bank',
+        'get_accounts', 'account_status', 'creation_fee',
+        'payment_status', 'order_status', 'created_at',
+    ]
+    list_filter   = ['payment_status', 'order_status', 'account_status', 'bank']
+    search_fields = ['first_name', 'last_name', 'email', 'geniuspay_reference', 'username']
+    date_hierarchy = 'created_at'
+    readonly_fields = [
+        'geniuspay_reference', 'geniuspay_transaction_id', 'checkout_url',
+        'paid_at', 'created_user', 'created_at', 'completed_at',
+        'username', 'creation_fee',
+    ]
+
+    def get_client_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    get_client_name.short_description = 'Client'
+
+    def get_accounts(self, obj):
+        parts = []
+        if obj.create_checking:
+            parts.append('Courant')
+        if obj.create_savings:
+            parts.append('Épargne')
+        return ' + '.join(parts) if parts else '—'
+    get_accounts.short_description = 'Comptes'
+
+    fieldsets = (
+        ('Commande', {
+            'fields': ('bank', 'order_status', 'created_at', 'completed_at'),
+        }),
+        ('Client', {
+            'fields': (
+                'first_name', 'last_name', 'email', 'phone',
+                'date_of_birth', 'address', 'city', 'country',
+            ),
+        }),
+        ('Configuration des comptes', {
+            'fields': (
+                'currency', 'account_status', 'suspension_reason',
+                ('create_checking', 'initial_checking_balance'),
+                ('create_savings',  'initial_savings_balance'),
+            ),
+        }),
+        ('Paiement GeniusPay', {
+            'fields': (
+                'creation_fee', 'payment_status', 'paid_at',
+                'geniuspay_reference', 'geniuspay_transaction_id', 'checkout_url',
+            ),
+        }),
+        ('Résultat', {
+            'fields': ('created_user', 'username', 'error_message'),
+        }),
+    )
 
 
 # Personnaliser les titres

@@ -1,0 +1,164 @@
+{% extends 'gateway/base.html' %}
+{% block title %}Commande #{{ order.id }} — Portail Partenaire{% endblock %}
+
+{% block content %}
+<div class="gw-container" style="max-width:800px;">
+
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'gateway:orders' %}" class="btn btn-outline" style="font-size:13px;padding:7px 14px;">
+      <i class='bx bx-arrow-back'></i>
+    </a>
+    <div>
+      <h1 style="font-size:20px;font-weight:800;color:#1a1a2e;">
+        Commande #{{ order.id }}
+      </h1>
+      <p style="font-size:13px;color:#6c757d;">{{ order.created_at|date:"d/m/Y à H:i" }}</p>
+    </div>
+    <!-- Statut global -->
+    {% if order.order_status == 'COMPLETED' %}
+      <span class="badge badge-success" style="font-size:13px;padding:7px 16px;">✅ Terminé</span>
+    {% elif order.order_status == 'FAILED' %}
+      <span class="badge badge-danger" style="font-size:13px;padding:7px 16px;">❌ Échoué</span>
+    {% elif order.order_status == 'PROCESSING' %}
+      <span class="badge badge-info" style="font-size:13px;padding:7px 16px;">⏳ En traitement</span>
+    {% else %}
+      <span class="badge badge-warning" style="font-size:13px;padding:7px 16px;">⏳ Att. paiement</span>
+    {% endif %}
+  </div>
+
+  <!-- Alerte si compte créé -->
+  {% if order.order_status == 'COMPLETED' %}
+  <div class="alert alert-success" style="margin-bottom:20px;">
+    <i class='bx bx-check-circle' style="font-size:20px;flex-shrink:0;"></i>
+    <div>
+      Compte créé avec succès !
+      {% if login_url %}
+      <a href="{{ login_url }}" target="_blank" style="font-weight:700;margin-left:8px;">
+        Lien de connexion client &rarr;
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if order.order_status == 'FAILED' and order.error_message %}
+  <div class="alert alert-danger" style="margin-bottom:20px;">
+    <i class='bx bx-error' style="font-size:20px;flex-shrink:0;"></i>
+    <div><strong>Erreur :</strong> {{ order.error_message }}</div>
+  </div>
+  {% endif %}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <!-- Infos client -->
+    <div class="card">
+      <div class="card-header"><h2>Informations client</h2></div>
+      <div class="card-body" style="padding:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;width:42%;border-bottom:1px solid #dee2e6;">Nom complet</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;font-weight:600;">{{ order.first_name }} {{ order.last_name }}</td></tr>
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Email</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">{{ order.email }}</td></tr>
+          {% if order.phone %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Téléphone</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">{{ order.phone }}</td></tr>
+          {% endif %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Pays</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">{{ order.country }}</td></tr>
+          {% if order.city %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;">Ville</td>
+              <td style="padding:10px 16px;">{{ order.city }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Config comptes -->
+    <div class="card">
+      <div class="card-header"><h2>Configuration</h2></div>
+      <div class="card-body" style="padding:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;width:42%;border-bottom:1px solid #dee2e6;">Banque</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;font-weight:600;">{{ order.bank.name }}</td></tr>
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Devise</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">{{ order.currency }}</td></tr>
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Comptes</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">
+                {% if order.create_checking %}<span class="badge badge-info">Courant</span> {% endif %}
+                {% if order.create_savings %}<span class="badge badge-secondary">Épargne</span>{% endif %}
+              </td></tr>
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Statut</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">
+                {% if order.account_status == 'ACTIVE' %}
+                  <span class="badge badge-success">Actif</span>
+                {% else %}
+                  <span class="badge badge-warning">Suspendu</span>
+                {% endif %}
+              </td></tr>
+          {% if order.order_status == 'COMPLETED' %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;">Username créé</td>
+              <td style="padding:10px 16px;font-family:monospace;font-weight:700;color:#4361ee;">{{ order.username }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Paiement -->
+    <div class="card">
+      <div class="card-header"><h2>Paiement GeniusPay</h2></div>
+      <div class="card-body" style="padding:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;width:42%;border-bottom:1px solid #dee2e6;">Montant</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;font-weight:700;">{{ order.creation_fee|floatformat:0 }} FCFA</td></tr>
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Statut paiement</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;">
+                {% if order.payment_status == 'PAID' %}<span class="badge badge-success">Payé</span>
+                {% elif order.payment_status == 'FAILED' %}<span class="badge badge-danger">Échoué</span>
+                {% elif order.payment_status == 'EXPIRED' %}<span class="badge badge-secondary">Expiré</span>
+                {% else %}<span class="badge badge-warning">En attente</span>{% endif %}
+              </td></tr>
+          {% if order.geniuspay_reference %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;border-bottom:1px solid #dee2e6;">Référence</td>
+              <td style="padding:10px 16px;border-bottom:1px solid #dee2e6;font-family:monospace;font-size:12px;">{{ order.geniuspay_reference }}</td></tr>
+          {% endif %}
+          {% if order.paid_at %}
+          <tr><td style="padding:10px 16px;background:#f8f9fa;color:#999;font-weight:600;">Payé le</td>
+              <td style="padding:10px 16px;">{{ order.paid_at|date:"d/m/Y à H:i" }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <div class="card-header"><h2>Actions</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+        {% if order.order_status == 'COMPLETED' and login_url %}
+        <a href="{{ login_url }}" target="_blank" class="btn btn-success">
+          <i class='bx bx-link-external'></i> Lien de connexion client
+        </a>
+        {% endif %}
+
+        {% if order.order_status in 'PENDING_PAYMENT,FAILED' %}
+        {% if order.checkout_url and order.order_status == 'PENDING_PAYMENT' %}
+        <a href="{% url 'gateway:payment' order.id %}" class="btn btn-primary">
+          <i class='bx bx-credit-card'></i> Reprendre le paiement
+        </a>
+        {% endif %}
+        <a href="{% url 'gateway:payment_retry' order.id %}" class="btn btn-outline">
+          <i class='bx bx-refresh'></i> Nouveau lien de paiement
+        </a>
+        {% endif %}
+
+        <a href="{% url 'gateway:create' %}" class="btn btn-outline">
+          <i class='bx bx-user-plus'></i> Nouveau compte
+        </a>
+        <a href="{% url 'gateway:orders' %}" class="btn btn-outline">
+          <i class='bx bx-list-ul'></i> Toutes les commandes
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

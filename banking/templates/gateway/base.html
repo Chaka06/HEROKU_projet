@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <title>{% block title %}Services en ligne{% endblock %}</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #4361ee;
+      --primary-d: #3a56d4;
+      --accent:    #06d6a0;
+      --dark:      #1a1a2e;
+      --dark2:     #16213e;
+      --gray:      #6c757d;
+      --light:     #f8f9fa;
+      --border:    #dee2e6;
+      --red:       #e63946;
+      --green:     #2dc653;
+      --orange:    #f4a261;
+      --white:     #ffffff;
+      --shadow:    0 2px 12px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .gw-header {
+      background: var(--dark);
+      color: #fff;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .gw-header .brand {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gw-header .brand span { color: var(--primary); }
+    .gw-header .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+    }
+
+    /* ── Layout ── */
+    .gw-container {
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    .gw-container.wide { max-width: 1160px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header h2 { font-size: 16px; font-weight: 700; color: var(--dark); }
+    .card-body { padding: 24px; }
+
+    /* ── Stepper ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 28px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray);
+    }
+    .step .num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px;
+    }
+    .step.active { color: var(--primary); }
+    .step.active .num { background: var(--primary); color: #fff; }
+    .step.done { color: var(--green); }
+    .step.done .num { background: var(--green); color: #fff; }
+    .step-sep { flex: 1; height: 2px; background: var(--border); margin: 0 8px; max-width: 80px; }
+    .step-sep.done { background: var(--green); }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    .form-group label .req { color: var(--red); }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      color: #222;
+      transition: border-color .2s, box-shadow .2s;
+      background: #fff;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67,97,238,.12);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ── Radio cards ── */
+    .radio-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .radio-card input[type=radio] { display: none; }
+    .radio-card label {
+      display: block;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .radio-card input:checked + label {
+      border-color: var(--primary);
+      background: #f0f4ff;
+    }
+    .radio-card .rc-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .radio-card .rc-price { font-size: 20px; font-weight: 800; color: var(--primary); }
+    .radio-card .rc-price.suspended { color: var(--orange); }
+    .radio-card .rc-desc { font-size: 12px; color: var(--gray); margin-top: 4px; }
+
+    /* ── Checkbox group ── */
+    .check-group {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .check-group .check-header {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+    }
+    .check-group .check-header input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); }
+    .check-group .check-header .ch-label { font-size: 14px; font-weight: 600; }
+    .check-group .check-body { margin-top: 14px; display: none; }
+    .check-group .check-body.open { display: block; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 22px;
+      border-radius: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-d); }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: #555;
+    }
+    .btn-outline:hover { background: var(--light); }
+    .btn-lg { padding: 13px 28px; font-size: 15px; }
+    .btn-block { width: 100%; justify-content: center; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-success  { background: #d4f5e0; color: #1a7c3a; }
+    .badge-warning  { background: #fff3cd; color: #856404; }
+    .badge-danger   { background: #ffe0e0; color: #b91c1c; }
+    .badge-info     { background: #d1ecf1; color: #0c5460; }
+    .badge-secondary{ background: #e9ecef; color: #495057; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 13px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .alert-danger  { background: #ffe4e4; border-left: 3px solid var(--red); color: #7f1d1d; }
+    .alert-success { background: #d4f5e0; border-left: 3px solid var(--green); color: #14532d; }
+    .alert-info    { background: #e0f2fe; border-left: 3px solid #0ea5e9; color: #0c4a6e; }
+    .alert-warning { background: #fffbeb; border-left: 3px solid var(--orange); color: #78350f; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table.gw-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .gw-table th {
+      background: var(--light);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--gray);
+      border-bottom: 2px solid var(--border);
+    }
+    .gw-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .gw-table tr:last-child td { border-bottom: none; }
+    .gw-table tr:hover td { background: #fafbff; }
+
+    /* ── Fee summary box ── */
+    .fee-box {
+      background: #f0f4ff;
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .fee-box .fee-label { font-size: 13px; color: #555; }
+    .fee-box .fee-amount { font-size: 24px; font-weight: 800; color: var(--primary); }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--gray);
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+      .radio-cards { grid-template-columns: 1fr; }
+      .gw-container { margin: 16px auto; }
+    }
+
+    /* ── Loading overlay ── */
+    #gw-loading {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(26,26,46,.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #gw-loading.show { display: flex; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="gw-loading"><div class="spinner"></div></div>
+
+<!-- Header -->
+<header class="gw-header">
+  <a href="{% url 'gateway:home' %}" class="brand">
+    <i class='bx bx-shield-quarter'></i>
+    Services <span>en ligne</span>
+  </a>
+  <div class="header-right">
+    <span style="font-size:12px;color:rgba(255,255,255,.5);">Paiement sécurisé via GeniusPay</span>
+  </div>
+</header>
+
+<!-- Content -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const loader = document.getElementById('gw-loading');
+    document.querySelectorAll('form').forEach(f => {
+      f.addEventListener('submit', () => { loader.classList.add('show'); });
+    });
+  });
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

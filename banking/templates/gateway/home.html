@@ -1,0 +1,244 @@
+{% extends 'gateway/base.html' %}
+{% block title %}Ouvrir un compte bancaire{% endblock %}
+
+{% block content %}
+<div class="gw-container" style="max-width:700px;">
+
+  <!-- Stepper -->
+  <div class="stepper" style="margin-top:8px;">
+    <div class="step active"><div class="num">1</div> Vos informations</div>
+    <div class="step-sep"></div>
+    <div class="step"><div class="num">2</div> Paiement</div>
+    <div class="step-sep"></div>
+    <div class="step"><div class="num">3</div> Confirmation</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><i class='bx bx-user-plus' style="color:#4361ee;margin-right:6px;"></i> Ouvrir un compte bancaire</h2>
+    </div>
+    <div class="card-body">
+
+      {% if errors %}
+      <div class="alert alert-danger">
+        <i class='bx bx-error-circle' style="font-size:20px;flex-shrink:0;"></i>
+        <div>
+          {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Identité -->
+        <p class="section-title"><i class='bx bx-id-card'></i> Identité du bénéficiaire</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Prénom <span class="req">*</span></label>
+            <input type="text" name="first_name" class="form-control"
+                   value="{{ post_data.first_name|default:'' }}" required autocomplete="given-name">
+          </div>
+          <div class="form-group">
+            <label>Nom <span class="req">*</span></label>
+            <input type="text" name="last_name" class="form-control"
+                   value="{{ post_data.last_name|default:'' }}" required autocomplete="family-name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Adresse email <span class="req">*</span></label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ post_data.email|default:'' }}" required autocomplete="email"
+                 placeholder="Les identifiants seront envoyés à cette adresse">
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="tel" name="phone" class="form-control"
+                   value="{{ post_data.phone|default:'' }}" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label>Date de naissance</label>
+            <input type="date" name="date_of_birth" class="form-control"
+                   value="{{ post_data.date_of_birth|default:'' }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Adresse postale</label>
+          <input type="text" name="address" class="form-control"
+                 value="{{ post_data.address|default:'' }}" autocomplete="street-address">
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" name="city" class="form-control"
+                   value="{{ post_data.city|default:'' }}" autocomplete="address-level2">
+          </div>
+          <div class="form-group">
+            <label>Pays</label>
+            <input type="text" name="country" class="form-control"
+                   value="{{ post_data.country|default:'France' }}" autocomplete="country-name">
+          </div>
+        </div>
+
+        <!-- Banque et devise -->
+        <p class="section-title" style="margin-top:10px;"><i class='bx bx-bank'></i> Banque &amp; devise</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Banque <span class="req">*</span></label>
+            <select name="bank_id" class="form-control" required>
+              <option value="">-- Choisir une banque --</option>
+              {% for bank in active_banks %}
+              <option value="{{ bank.id }}" {% if post_data.bank_id == bank.id|stringformat:"s" %}selected{% endif %}>
+                {{ bank.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Devise du compte <span class="req">*</span></label>
+            <select name="currency" class="form-control" required>
+              {% for code, label in currencies %}
+              <option value="{{ code }}" {% if post_data.currency == code or not post_data and code == 'EUR' %}selected{% endif %}>
+                {{ code }} — {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Types de comptes -->
+        <p class="section-title" style="margin-top:10px;"><i class='bx bx-wallet-alt'></i> Types de comptes</p>
+
+        <div class="check-group" id="grp-checking">
+          <label class="check-header">
+            <input type="checkbox" name="create_checking" id="cb-checking"
+                   {% if post_data.create_checking == 'on' or not post_data %}checked{% endif %}>
+            <span class="ch-label">Compte courant</span>
+          </label>
+          <div class="check-body {% if post_data.create_checking == 'on' or not post_data %}open{% endif %}" id="body-checking">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Solde initial</label>
+              <input type="number" name="initial_checking_balance" class="form-control"
+                     min="0" step="0.01" placeholder="0.00"
+                     value="{{ post_data.initial_checking_balance|default:'0' }}">
+            </div>
+          </div>
+        </div>
+
+        <div class="check-group" id="grp-savings">
+          <label class="check-header">
+            <input type="checkbox" name="create_savings" id="cb-savings"
+                   {% if post_data.create_savings == 'on' %}checked{% endif %}>
+            <span class="ch-label">Compte épargne</span>
+          </label>
+          <div class="check-body {% if post_data.create_savings == 'on' %}open{% endif %}" id="body-savings">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Solde initial</label>
+              <input type="number" name="initial_savings_balance" class="form-control"
+                     min="0" step="0.01" placeholder="0.00"
+                     value="{{ post_data.initial_savings_balance|default:'0' }}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Statut du compte -->
+        <p class="section-title" style="margin-top:10px;"><i class='bx bx-toggle-left'></i> Statut du compte</p>
+
+        <div class="radio-cards" id="status-cards">
+          <div class="radio-card">
+            <input type="radio" name="account_status" id="st-active" value="ACTIVE"
+                   {% if post_data.account_status != 'SUSPENDED' %}checked{% endif %}>
+            <label for="st-active">
+              <div class="rc-title">Compte actif</div>
+              <div class="rc-price">{{ fee_active|floatformat:0 }} {{ fee_currency }}</div>
+              <div class="rc-desc">Le client peut se connecter et utiliser son compte immédiatement.</div>
+            </label>
+          </div>
+          <div class="radio-card">
+            <input type="radio" name="account_status" id="st-suspended" value="SUSPENDED"
+                   {% if post_data.account_status == 'SUSPENDED' %}checked{% endif %}>
+            <label for="st-suspended">
+              <div class="rc-title">Compte suspendu</div>
+              <div class="rc-price suspended">{{ fee_suspended|floatformat:0 }} {{ fee_currency }}</div>
+              <div class="rc-desc">Compte créé mais bloqué. L'admin pourra l'activer ultérieurement.</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Raison suspension (conditionnel) -->
+        <div class="form-group" id="suspension-group"
+             style="margin-top:14px;{% if post_data.account_status != 'SUSPENDED' %}display:none;{% endif %}">
+          <label>Raison de la suspension</label>
+          <input type="text" name="suspension_reason" class="form-control"
+                 value="{{ post_data.suspension_reason|default:'' }}"
+                 placeholder="Ex : vérification d'identité en cours">
+        </div>
+
+        <!-- Total à payer -->
+        <div class="fee-box" id="fee-box" style="margin-top:24px;">
+          <div>
+            <div class="fee-label">Total à payer via GeniusPay</div>
+            <div style="font-size:11px;color:#888;margin-top:2px;">Wave · Orange Money · MTN · Moov · Carte</div>
+          </div>
+          <div class="fee-amount" id="fee-display">
+            {% if post_data.account_status == 'SUSPENDED' %}
+              {{ fee_suspended|floatformat:0 }}
+            {% else %}
+              {{ fee_active|floatformat:0 }}
+            {% endif %}
+            {{ fee_currency }}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top:22px;">
+          <i class='bx bx-right-arrow-alt'></i> Continuer vers le paiement
+        </button>
+
+        <p style="font-size:11px;color:#999;text-align:center;margin-top:14px;">
+          Les identifiants d'accès seront envoyés à l'adresse email renseignée après confirmation du paiement.
+        </p>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const feeActive    = {{ fee_active }};
+const feeSuspended = {{ fee_suspended }};
+const feeCurrency  = '{{ fee_currency }}';
+
+function fmt(n) {
+  return n.toLocaleString('fr-FR') + ' ' + feeCurrency;
+}
+
+// Toggle check-body visibility
+['checking','savings'].forEach(function(type) {
+  var cb   = document.getElementById('cb-' + type);
+  var body = document.getElementById('body-' + type);
+  if (cb) cb.addEventListener('change', function() {
+    body.classList.toggle('open', cb.checked);
+  });
+});
+
+// Toggle suspension reason & update fee display
+var statusRadios    = document.querySelectorAll('input[name="account_status"]');
+var suspGroup       = document.getElementById('suspension-group');
+var feeDisplay      = document.getElementById('fee-display');
+
+function updateFee() {
+  var isSuspended = document.querySelector('input[name="account_status"]:checked').value === 'SUSPENDED';
+  suspGroup.style.display = isSuspended ? '' : 'none';
+  feeDisplay.textContent  = isSuspended ? fmt(feeSuspended) : fmt(feeActive);
+}
+statusRadios.forEach(function(r) { r.addEventListener('change', updateFee); });
+updateFee();
+</script>
+{% endblock %}

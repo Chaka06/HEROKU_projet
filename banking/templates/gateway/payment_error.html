@@ -1,0 +1,47 @@
+{% extends 'gateway/base.html' %}
+{% block title %}Paiement échoué{% endblock %}
+
+{% block content %}
+<div class="gw-container" style="max-width:520px;">
+  <div class="card" style="text-align:center;">
+    <div class="card-body" style="padding:48px 32px;">
+
+      <div style="width:72px;height:72px;background:#ffe4e4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px;color:#e63946;">
+        <i class='bx bx-x-circle'></i>
+      </div>
+
+      <h2 style="font-size:22px;color:#1a1a2e;margin-bottom:10px;">Paiement annulé ou échoué</h2>
+      <p style="color:#6c757d;font-size:14px;margin-bottom:24px;">
+        Le paiement pour la commande <strong>#{{ order.id }}</strong> n'a pas abouti.<br>
+        Vos informations ont été conservées. Vous pouvez réessayer sans remplir le formulaire à nouveau.
+      </p>
+
+      {% if retry_error %}
+      <div class="alert alert-danger" style="text-align:left;margin-bottom:20px;">
+        <i class='bx bx-error-circle' style="flex-shrink:0;"></i>
+        <div>{{ retry_error }}</div>
+      </div>
+      {% endif %}
+
+      <div style="background:#f8f9fa;border-radius:10px;padding:16px;margin-bottom:28px;text-align:left;font-size:13px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><span style="color:#999;">Bénéficiaire :</span> <strong>{{ order.first_name }} {{ order.last_name }}</strong></div>
+          <div><span style="color:#999;">Montant :</span> <strong>{{ order.creation_fee|floatformat:0 }} FCFA</strong></div>
+          <div><span style="color:#999;">Banque :</span> {{ order.bank.name }}</div>
+          <div><span style="color:#999;">Commande :</span> #{{ order.id }}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="{% url 'gateway:payment_retry' order.id %}" class="btn btn-primary btn-lg">
+          <i class='bx bx-refresh'></i> Réessayer le paiement
+        </a>
+        <a href="{% url 'gateway:home' %}" class="btn btn-outline">
+          <i class='bx bx-edit'></i> Nouveau formulaire
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

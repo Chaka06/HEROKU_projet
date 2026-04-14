@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('gateway/', include('banking.gateway_urls', namespace='gateway')),
     path('', include('banking.urls')),
 ]
 
