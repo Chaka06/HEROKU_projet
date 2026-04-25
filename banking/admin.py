@@ -406,6 +406,10 @@ class TransactionAdmin(admin.ModelAdmin):
             'fields': ('amount',),
             'description': '⚠️ Le solde sera calculé automatiquement'
         }),
+        ('Date de la transaction', {
+            'fields': ('created_at',),
+            'description': 'Date et heure de la transaction (modifiable)'
+        }),
         ('Détails', {
             'fields': ('description', 'reference', 'recipient', 'recipient_iban'),
             'classes': ('collapse',),
