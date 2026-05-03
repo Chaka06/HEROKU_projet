@@ -412,7 +412,6 @@ class TransactionAdmin(admin.ModelAdmin):
         }),
         ('Détails', {
             'fields': ('description', 'reference', 'recipient', 'recipient_iban'),
-            'classes': ('collapse',),
         }),
         ('Validation', {
             'fields': ('confirmed_at', 'rejected_at', 'rejection_reason', 'rejection_fee'),
