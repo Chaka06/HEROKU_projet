@@ -403,8 +403,8 @@ class TransactionAdmin(admin.ModelAdmin):
             'description': 'DEPOSIT = Crédit (+) | Autres = Débit (-) | Statut par défaut: EN ATTENTE'
         }),
         ('Montant', {
-            'fields': ('amount',),
-            'description': '⚠️ Le solde sera calculé automatiquement'
+            'fields': ('amount', 'balance_after'),
+            'description': '⚠️ Modifier "Solde après" met à jour le solde réel du compte'
         }),
         ('Date de la transaction', {
             'fields': ('created_at',),
@@ -423,17 +423,16 @@ class TransactionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             account = obj.account
-            
-            # Calculer le nouveau solde
+
             if obj.transaction_type == 'DEPOSIT':
                 account.balance += obj.amount
             else:
                 account.balance -= obj.amount
-            
+
             obj.balance_after = account.balance
             obj.save()
             account.save()
-            
+
             from django.contrib import messages
             sign = '+' if obj.transaction_type == 'DEPOSIT' else '-'
             symbol = get_currency_symbol(account.currency)
@@ -443,6 +442,20 @@ class TransactionAdmin(admin.ModelAdmin):
                 f"Statut: EN ATTENTE (le client doit confirmer)"
             )
         else:
+            # Modification: si balance_after a changé, ajuster le solde du compte
+            if 'balance_after' in form.changed_data:
+                old_balance_after = Transaction.objects.get(pk=obj.pk).balance_after
+                difference = obj.balance_after - old_balance_after
+                obj.account.balance += difference
+                obj.account.save()
+
+                from django.contrib import messages
+                symbol = get_currency_symbol(obj.account.currency)
+                messages.success(request,
+                    f"✅ Solde après transaction mis à jour: {obj.balance_after} {symbol} | "
+                    f"Solde du compte ajusté de {'+' if difference >= 0 else ''}{difference} {symbol}"
+                )
+
             super().save_model(request, obj, form, change)
 
 

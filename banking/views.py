@@ -743,11 +743,7 @@ def reject_transaction_view(request, transaction_id):
                 transaction.account.balance += transaction.amount
             else:
                 transaction.account.balance -= transaction.amount
-            
-            # Appliquer les frais de rejet
-            if rejection_fee > 0:
-                transaction.account.balance -= rejection_fee
-            
+
             transaction.account.save()
             
             # Mettre à jour la transaction
