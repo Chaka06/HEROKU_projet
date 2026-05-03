@@ -96,6 +96,19 @@ def _build_email_html(bank, status_color, status_label, status_icon,
     year = datetime.now().year
     bank_secondary = getattr(bank, 'secondary_color', primary_color)
 
+    # Bloc avertissement sécurité (optionnel)
+    if show_security_warning:
+        security_block = (
+            '<table width="100%" cellpadding="0" cellspacing="0" border="0">'
+            '<tr><td style="background:#f7f8fa;border-left:3px solid ' + primary_color + ';padding:10px 14px;">'
+            '<p style="margin:0;font-size:11px;color:#777;line-height:1.5;">'
+            '&#128274; Si vous n\'etes pas a l\'origine de cette operation, '
+            'contactez immediatement votre conseiller bancaire.'
+            '</p></td></tr></table>'
+        )
+    else:
+        security_block = ''
+
     # Bloc montant (optionnel)
     if amount_display:
         amount_block = (
@@ -182,7 +195,7 @@ def _build_email_html(bank, status_color, status_label, status_icon,
 
           {extra_block}
 
-          {'<!-- Avertissement sécurité --><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#f7f8fa;border-left:3px solid ' + primary_color + ';padding:10px 14px;"><p style="margin:0;font-size:11px;color:#777;line-height:1.5;">&#128274; Si vous n\'êtes pas à l\'origine de cette opération, contactez immédiatement votre conseiller bancaire.</p></td></tr></table>' if show_security_warning else ''}
+          {security_block}
 
         </td>
       </tr>
