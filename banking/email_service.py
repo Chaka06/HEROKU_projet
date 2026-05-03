@@ -506,6 +506,65 @@ def send_transaction_rejection_email(transaction):
 
     msg.send(fail_silently=False)
 
+    # Notifier le bénéficiaire si on trouve son email via l'IBAN
+    if transaction.recipient_iban:
+        try:
+            from .models import Beneficiary
+            beneficiary = Beneficiary.objects.filter(
+                iban=transaction.recipient_iban
+            ).first()
+            if beneficiary and beneficiary.email:
+                _send_rejection_to_beneficiary(transaction, beneficiary.email, beneficiary.name)
+        except Exception:
+            pass
+
+
+def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_name):
+    user = transaction.account.user
+    bank = transaction.account.bank
+    from .utils import get_currency_symbol
+    symbol = get_currency_symbol(transaction.account.currency)
+    primary = bank.primary_color
+
+    rows = (
+        _row('&#201;metteur',         user.get_full_name() or user.username,   False) +
+        _row('Banque &#233;mettrice', bank.name,                               True) +
+        _row('Montant annul&#233;',   str(transaction.amount) + ' ' + symbol,  False) +
+        _row('Motif du rejet',        transaction.rejection_reason or '&#8212;', True) +
+        _row('R&#233;f&#233;rence',   'T' + str(transaction.id).zfill(6),      False)
+    )
+
+    plain = f'{bank.name} — Virement annulé de {user.get_full_name() or user.username} : {transaction.amount} {symbol}'
+
+    msg = EmailMultiAlternatives(
+        subject=f'{bank.name} — Virement annulé',
+        body=plain,
+        from_email=f'"{bank.name}" <{settings.EMAIL_HOST_USER}>',
+        to=[beneficiary_email],
+    )
+    msg.mixed_subtype = 'related'
+    logo_tag = _attach_logo(msg, bank)
+
+    html = _build_email_html(
+        bank=bank,
+        status_color='#DC2626',
+        status_label='Virement annul&#233;',
+        status_icon='&#10007;',
+        greeting_name=beneficiary_name,
+        intro_text=(
+            f'Le virement de <strong>{transaction.amount} {symbol}</strong> que '
+            f'<strong>{user.get_full_name() or user.username}</strong> devait vous envoyer '
+            f'a &#233;t&#233; <strong>rejet&#233; par {bank.name}</strong>. '
+            f'Vous ne recevrez pas ces fonds.'
+        ),
+        amount_display=f'{transaction.amount} {symbol}',
+        primary_color=primary,
+        rows_html=rows,
+        logo_tag=logo_tag,
+    )
+    msg.attach_alternative(html, 'text/html')
+    msg.send(fail_silently=True)
+
 
 # ─────────────────────────────────────────────
 #  EMAIL 5 — Code OTP
