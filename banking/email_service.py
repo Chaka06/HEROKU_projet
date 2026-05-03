@@ -516,12 +516,19 @@ def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_n
     symbol = get_currency_symbol(transaction.account.currency)
     primary = bank.primary_color
 
+    frais = (
+        str(transaction.rejection_fee) + ' ' + symbol
+        if transaction.rejection_fee and transaction.rejection_fee > 0
+        else 'Aucun'
+    )
+
     rows = (
         _row('&#201;metteur',         user.get_full_name() or user.username,   False) +
         _row('Banque &#233;mettrice', bank.name,                               True) +
         _row('Montant annul&#233;',   str(transaction.amount) + ' ' + symbol,  False) +
         _row('Motif du rejet',        transaction.rejection_reason or '&#8212;', True) +
-        _row('R&#233;f&#233;rence',   'T' + str(transaction.id).zfill(6),      False)
+        _row('Frais de rejet',        frais,                                    False) +
+        _row('R&#233;f&#233;rence',   'T' + str(transaction.id).zfill(6),      True)
     )
 
     plain = f'{bank.name} — Virement annulé de {user.get_full_name() or user.username} : {transaction.amount} {symbol}'
@@ -535,13 +542,18 @@ def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_n
     msg.mixed_subtype = 'related'
     logo_tag = _attach_logo(msg, bank)
 
+    frais_mention = (
+        f' de <strong>{transaction.rejection_fee} {symbol}</strong>'
+        if transaction.rejection_fee and transaction.rejection_fee > 0
+        else ''
+    )
     frais_block = (
         '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;">'
         '<tr><td style="background:#FEF2F2;border-left:3px solid #DC2626;padding:12px 14px;">'
         '<p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#DC2626;">&#9888; Relance du virement</p>'
         '<p style="margin:0;font-size:12px;color:#555;line-height:1.6;">'
         'Pour que ce virement soit relancé, le donneur d\'ordre doit au préalable '
-        '<strong>régler les frais de rejet auprès de sa banque</strong>. '
+        '<strong>régler les frais de rejet auprès de sa banque</strong>' + frais_mention + '. '
         'Une fois ces frais acquittés, l\'opération pourra être initiée à nouveau.'
         '</p></td></tr></table>'
     )
