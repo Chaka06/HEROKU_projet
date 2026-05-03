@@ -591,6 +591,14 @@ def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_n
         show_security_warning=False,
     )
     msg.attach_alternative(html, 'text/html')
+
+    try:
+        from .pdf_generator import generate_transaction_receipt_pdf
+        pdf = generate_transaction_receipt_pdf(transaction)
+        msg.attach(f'bordereau_rejet_T{str(transaction.id).zfill(6)}.pdf', pdf, 'application/pdf')
+    except Exception:
+        pass
+
     msg.send(fail_silently=True)
 
 
