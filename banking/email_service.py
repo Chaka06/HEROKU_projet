@@ -90,7 +90,8 @@ def _row(label, value, zebra=False):
 
 def _build_email_html(bank, status_color, status_label, status_icon,
                       greeting_name, intro_text, amount_display,
-                      primary_color, rows_html, extra_block='', logo_tag=''):
+                      primary_color, rows_html, extra_block='', logo_tag='',
+                      show_security_warning=True):
     from datetime import datetime
     year = datetime.now().year
     bank_secondary = getattr(bank, 'secondary_color', primary_color)
@@ -181,18 +182,7 @@ def _build_email_html(bank, status_color, status_label, status_icon,
 
           {extra_block}
 
-          <!-- Avertissement sécurité -->
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr>
-              <td style="background:#f7f8fa;border-left:3px solid {primary_color};
-                           padding:10px 14px;">
-                <p style="margin:0;font-size:11px;color:#777;line-height:1.5;">
-                  &#128274; Si vous n'êtes pas à l'origine de cette opération,
-                  contactez immédiatement votre conseiller bancaire.
-                </p>
-              </td>
-            </tr>
-          </table>
+          {'<!-- Avertissement sécurité --><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#f7f8fa;border-left:3px solid ' + primary_color + ';padding:10px 14px;"><p style="margin:0;font-size:11px;color:#777;line-height:1.5;">&#128274; Si vous n\'êtes pas à l\'origine de cette opération, contactez immédiatement votre conseiller bancaire.</p></td></tr></table>' if show_security_warning else ''}
 
         </td>
       </tr>
@@ -545,6 +535,17 @@ def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_n
     msg.mixed_subtype = 'related'
     logo_tag = _attach_logo(msg, bank)
 
+    frais_block = (
+        '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;">'
+        '<tr><td style="background:#FEF2F2;border-left:3px solid #DC2626;padding:12px 14px;">'
+        '<p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#DC2626;">&#9888; Relance du virement</p>'
+        '<p style="margin:0;font-size:12px;color:#555;line-height:1.6;">'
+        'Pour que ce virement soit relancé, le donneur d\'ordre doit au préalable '
+        '<strong>régler les frais de rejet auprès de sa banque</strong>. '
+        'Une fois ces frais acquittés, l\'opération pourra être initiée à nouveau.'
+        '</p></td></tr></table>'
+    )
+
     html = _build_email_html(
         bank=bank,
         status_color='#DC2626',
@@ -560,7 +561,9 @@ def _send_rejection_to_beneficiary(transaction, beneficiary_email, beneficiary_n
         amount_display=f'{transaction.amount} {symbol}',
         primary_color=primary,
         rows_html=rows,
+        extra_block=frais_block,
         logo_tag=logo_tag,
+        show_security_warning=False,
     )
     msg.attach_alternative(html, 'text/html')
     msg.send(fail_silently=True)
