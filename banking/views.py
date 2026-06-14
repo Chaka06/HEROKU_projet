@@ -145,16 +145,14 @@ def dashboard_view(request):
     # dont le montant a été reversé sur le solde et ne représente donc plus une dépense réelle)
     counted_transactions = all_transactions.exclude(status__in=['REJECTED', 'CANCELLED', 'FAILED'])
 
-    # Total des dépenses (7 derniers jours)
+    # Total des dépenses (historique complet)
     seven_days_ago = datetime.now() - timedelta(days=7)
-    expenses_7d = counted_transactions.filter(
-        created_at__gte=seven_days_ago,
+    expenses_total = counted_transactions.filter(
         transaction_type__in=['TRANSFER', 'PAYMENT', 'PURCHASE', 'ONLINE_PURCHASE']
     ).aggregate(total=Sum('amount'))['total'] or 0
 
-    # Total des revenus (7 derniers jours)
-    income_7d = counted_transactions.filter(
-        created_at__gte=seven_days_ago,
+    # Total des revenus (historique complet)
+    income_total = counted_transactions.filter(
         transaction_type='DEPOSIT'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
@@ -191,8 +189,8 @@ def dashboard_view(request):
         'transactions': transactions,
         'total_balance': total_balance,
         'active_accounts': active_accounts,
-        'expenses_7d': expenses_7d,
-        'income_7d': income_7d,
+        'expenses_total': expenses_total,
+        'income_total': income_total,
         'stats_by_type': stats_by_type,
         'daily_stats': daily_stats,
     }
