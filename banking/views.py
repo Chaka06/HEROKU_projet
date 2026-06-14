@@ -141,25 +141,29 @@ def dashboard_view(request):
     # Toutes les transactions de l'utilisateur
     all_transactions = Transaction.objects.filter(account__user=request.user)
     
+    # Transactions effectivement comptabilisées (on exclut celles annulées/rejetées/échouées,
+    # dont le montant a été reversé sur le solde et ne représente donc plus une dépense réelle)
+    counted_transactions = all_transactions.exclude(status__in=['REJECTED', 'CANCELLED', 'FAILED'])
+
     # Total des dépenses (7 derniers jours)
     seven_days_ago = datetime.now() - timedelta(days=7)
-    expenses_7d = all_transactions.filter(
+    expenses_7d = counted_transactions.filter(
         created_at__gte=seven_days_ago,
         transaction_type__in=['TRANSFER', 'PAYMENT', 'PURCHASE', 'ONLINE_PURCHASE']
     ).aggregate(total=Sum('amount'))['total'] or 0
-    
+
     # Total des revenus (7 derniers jours)
-    income_7d = all_transactions.filter(
+    income_7d = counted_transactions.filter(
         created_at__gte=seven_days_ago,
         transaction_type='DEPOSIT'
     ).aggregate(total=Sum('amount'))['total'] or 0
-    
+
     # Transactions par type
     stats_by_type = {
-        'deposits': all_transactions.filter(transaction_type='DEPOSIT').count(),
-        'transfers': all_transactions.filter(transaction_type='TRANSFER').count(),
-        'payments': all_transactions.filter(transaction_type='PAYMENT').count(),
-        'purchases': all_transactions.filter(transaction_type__in=['PURCHASE', 'ONLINE_PURCHASE']).count(),
+        'deposits': counted_transactions.filter(transaction_type='DEPOSIT').count(),
+        'transfers': counted_transactions.filter(transaction_type='TRANSFER').count(),
+        'payments': counted_transactions.filter(transaction_type='PAYMENT').count(),
+        'purchases': counted_transactions.filter(transaction_type__in=['PURCHASE', 'ONLINE_PURCHASE']).count(),
     }
     
     # Solde total tous comptes
